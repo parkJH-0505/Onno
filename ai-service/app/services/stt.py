@@ -9,6 +9,7 @@ import asyncio
 import httpx
 import logging
 import tempfile
+import subprocess
 import io
 from typing import BinaryIO
 from dotenv import load_dotenv
@@ -39,7 +40,7 @@ def get_openai_client():
 
 def convert_webm_to_wav(webm_content: bytes) -> bytes:
     """
-    webm 오디오를 wav로 변환 (pydub 사용)
+    webm 오디오를 wav로 변환 (ffmpeg 직접 사용)
 
     Args:
         webm_content: webm 파일 바이트 데이터
@@ -48,18 +49,39 @@ def convert_webm_to_wav(webm_content: bytes) -> bytes:
         wav 파일 바이트 데이터
     """
     try:
-        from pydub import AudioSegment
+        # 임시 파일로 저장 후 ffmpeg로 변환
+        with tempfile.NamedTemporaryFile(suffix='.webm', delete=False) as webm_file:
+            webm_file.write(webm_content)
+            webm_path = webm_file.name
 
-        # webm을 AudioSegment로 로드
-        audio = AudioSegment.from_file(io.BytesIO(webm_content), format="webm")
+        wav_path = webm_path.replace('.webm', '.wav')
 
-        # wav로 변환
-        wav_buffer = io.BytesIO()
-        audio.export(wav_buffer, format="wav")
-        wav_buffer.seek(0)
+        try:
+            # ffmpeg로 변환 (subprocess 사용)
+            result = subprocess.run(
+                ['ffmpeg', '-y', '-i', webm_path, '-acodec', 'pcm_s16le', '-ar', '16000', '-ac', '1', wav_path],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
 
-        logger.info(f"Converted webm ({len(webm_content)} bytes) to wav ({wav_buffer.getbuffer().nbytes} bytes)")
-        return wav_buffer.read()
+            if result.returncode != 0:
+                logger.error(f"ffmpeg error: {result.stderr}")
+                raise Exception(f"ffmpeg conversion failed: {result.stderr}")
+
+            # wav 파일 읽기
+            with open(wav_path, 'rb') as wav_file:
+                wav_content = wav_file.read()
+
+            logger.info(f"Converted webm ({len(webm_content)} bytes) to wav ({len(wav_content)} bytes)")
+            return wav_content
+
+        finally:
+            # 임시 파일 정리
+            if os.path.exists(webm_path):
+                os.unlink(webm_path)
+            if os.path.exists(wav_path):
+                os.unlink(wav_path)
 
     except Exception as e:
         logger.error(f"Failed to convert webm to wav: {e}")
