@@ -63,18 +63,27 @@ io.on('connection', (socket) => {
       );
 
       const transcript = sttResponse.data;
-      console.log('Transcription received:', transcript.text.substring(0, 50) + '...');
+      console.log('Transcription received:', transcript.text?.substring(0, 50) + '...');
 
-      // 전사 결과를 클라이언트로 전송
+      // 빈 전사 결과는 무시
+      if (!transcript.text || transcript.text.trim().length === 0) {
+        console.log('Empty transcript, skipping...');
+        return;
+      }
+
+      // 전사 결과를 클라이언트로 전송 (segments 포함)
       io.to(`meeting-${meetingId}`).emit('transcription', {
         id: Date.now().toString(),
         text: transcript.text,
+        formattedText: transcript.formatted_text,
+        segments: transcript.segments || [],
         timestamp: new Date().toISOString(),
-        latency: transcript.latency
+        latency: transcript.latency,
+        provider: transcript.provider
       });
 
-      // 전사가 일정 길이 이상이면 질문 생성 (Mock 모드: 20자, 실제: 100자)
-      if (transcript.text.length > 20) {
+      // 전사가 일정 길이 이상이면 질문 생성
+      if (transcript.text.length > 50) {
         console.log('Generating questions...');
 
         const questionResponse = await axios.post(

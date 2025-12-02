@@ -11,10 +11,15 @@ import logging
 import tempfile
 import subprocess
 import io
-from typing import BinaryIO
+from typing import BinaryIO, Optional
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# 지연 임포트를 위한 함수
+def get_speaker_analyzer():
+    from app.services.speaker_analyzer import estimate_single_utterance_role
+    return estimate_single_utterance_role
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
@@ -201,10 +206,27 @@ async def transcribe_audio_daglo_sync(audio_content: bytes, is_wav: bool = False
     transcript = result.get("sttResult", {}).get("transcript", "")
     logger.info(f"Daglo transcript: {transcript[:100]}..." if len(transcript) > 100 else f"Daglo transcript: {transcript}")
 
+    # 화자 역할 추정 (Sync API는 화자 분리 없으므로 단일 발화로 추정)
+    speaker_role = "unknown"
+    try:
+        estimate_role = get_speaker_analyzer()
+        speaker_role = estimate_role(transcript)
+        logger.info(f"Estimated speaker role: {speaker_role}")
+    except Exception as e:
+        logger.warning(f"Failed to estimate speaker role: {e}")
+
+    # 단일 세그먼트로 구성 (화자 분리 없음)
+    segments = [{
+        "speaker": "화자",
+        "text": transcript,
+        "startTime": 0,
+        "speakerRole": speaker_role
+    }] if transcript else []
+
     return {
         "text": transcript,
-        "formatted_text": transcript,  # Sync API는 화자 분리 없음
-        "segments": [],
+        "formatted_text": transcript,
+        "segments": segments,
         "duration": 0,
         "latency": latency,
         "provider": "daglo_sync"
@@ -370,10 +392,28 @@ async def transcribe_audio_whisper(audio_file: BinaryIO) -> dict:
 
     logger.info(f"Whisper transcript: {transcript[:100]}..." if len(transcript) > 100 else f"Whisper transcript: {transcript}")
 
+    # 화자 역할 추정 (Whisper도 단일 발화로 추정)
+    speaker_role = "unknown"
+    if transcript:
+        try:
+            estimate_role = get_speaker_analyzer()
+            speaker_role = estimate_role(transcript)
+            logger.info(f"Whisper estimated speaker role: {speaker_role}")
+        except Exception as e:
+            logger.warning(f"Failed to estimate speaker role for Whisper: {e}")
+
+    # 단일 세그먼트로 구성 (화자 분리 없음)
+    segments = [{
+        "speaker": "화자",
+        "text": transcript,
+        "startTime": 0,
+        "speakerRole": speaker_role
+    }] if transcript else []
+
     return {
         "text": transcript,
         "formatted_text": transcript,
-        "segments": [],
+        "segments": segments,
         "duration": response.duration,
         "latency": latency,
         "provider": "whisper"
