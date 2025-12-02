@@ -1,0 +1,261 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background: #f5f5f5;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.meeting-room {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.meeting-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.meeting-header h1 {
+  font-size: 32px;
+  color: #333;
+}
+
+.meeting-status {
+  font-size: 18px;
+}
+
+.status-recording {
+  color: #ff4444;
+  font-weight: bold;
+}
+
+.status-idle {
+  color: #999;
+}
+
+.meeting-controls {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.audio-recorder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.record-button {
+  padding: 20px 40px;
+  font-size: 20px;
+  border: none;
+  border-radius: 50px;
+  background: #4CAF50;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.record-button:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.record-button.recording {
+  background: #ff4444;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ff4444;
+  font-weight: bold;
+}
+
+.pulse {
+  width: 12px;
+  height: 12px;
+  background: #ff4444;
+  border-radius: 50%;
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+}
+
+.meeting-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+.left-panel, .right-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.transcript-panel h3,
+.questions-section h3 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 20px;
+}
+
+.transcript-list {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.transcript-item {
+  padding: 15px;
+  margin-bottom: 10px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border-left: 3px solid #4CAF50;
+}
+
+.transcript-text {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  color: #333;
+}
+
+.transcript-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.question-card {
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  border-left: 4px solid;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.question-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.question-card.used {
+  opacity: 0.6;
+  background: #f0f0f0;
+}
+
+.question-header {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.priority-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.category-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: #e0e0e0;
+  font-size: 12px;
+  color: #666;
+}
+
+.question-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.question-reason {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
+  line-height: 1.4;
+}
+
+.question-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-use,
+.btn-dismiss {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-use {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-use:hover {
+  background: #45a049;
+}
+
+.btn-dismiss {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.btn-dismiss:hover {
+  background: #e0e0e0;
+}
+
+.empty-state {
+  text-align: center;
+  color: #999;
+  padding: 40px;
+  font-size: 14px;
+}
+
+.error-message {
+  color: #ff4444;
+  background: #ffe0e0;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}

@@ -1,18 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(gh auth:*)",
-      "Read(//c/Users/포켓컴퍼니/OneDrive/Desktop/박준홍 자료/New Projects/**)",
-      "Bash(node --version:*)",
-      "Bash(npm --version:*)",
-      "Bash(npm create:*)",
-      "Bash(npm install)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git config:*)",
-      "Bash(git remote add:*)",
-      "Bash(git branch:*)",
-      "Bash(git push:*)"
+      "Bash(powershell -Command \"Stop-Process -Id 10500 -Force\")",
+      "Bash(powershell -Command \"Stop-Process -Id 37268 -Force\")"
     ],
     "deny": [],
     "ask": []
