@@ -8,6 +8,8 @@ import os
 import asyncio
 import httpx
 import logging
+import tempfile
+import io
 from typing import BinaryIO
 from dotenv import load_dotenv
 
@@ -33,6 +35,35 @@ def get_openai_client():
         from openai import OpenAI
         _openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     return _openai_client
+
+
+def convert_webm_to_wav(webm_content: bytes) -> bytes:
+    """
+    webm 오디오를 wav로 변환 (pydub 사용)
+
+    Args:
+        webm_content: webm 파일 바이트 데이터
+
+    Returns:
+        wav 파일 바이트 데이터
+    """
+    try:
+        from pydub import AudioSegment
+
+        # webm을 AudioSegment로 로드
+        audio = AudioSegment.from_file(io.BytesIO(webm_content), format="webm")
+
+        # wav로 변환
+        wav_buffer = io.BytesIO()
+        audio.export(wav_buffer, format="wav")
+        wav_buffer.seek(0)
+
+        logger.info(f"Converted webm ({len(webm_content)} bytes) to wav ({wav_buffer.getbuffer().nbytes} bytes)")
+        return wav_buffer.read()
+
+    except Exception as e:
+        logger.error(f"Failed to convert webm to wav: {e}")
+        raise
 
 
 def format_timestamp(seconds: float) -> str:
@@ -88,22 +119,7 @@ def format_transcript_with_speakers(segments: list) -> str:
     return "\n".join(formatted_lines)
 
 
-async def upload_audio_and_get_url(audio_file: BinaryIO) -> str:
-    """
-    오디오 파일을 임시 저장소에 업로드하고 URL 반환
-
-    Note: Daglo Async API는 URL 기반으로 동작하므로
-          파일을 먼저 접근 가능한 URL로 업로드해야 함
-
-    현재는 Sync API를 직접 사용하거나,
-    파일 서버 구현이 필요함
-    """
-    # TODO: 파일 업로드 서버 구현 필요
-    # 임시로 None 반환
-    return None
-
-
-async def transcribe_audio_daglo_sync(audio_file: BinaryIO) -> dict:
+async def transcribe_audio_daglo_sync(audio_content: bytes, is_wav: bool = False) -> dict:
     """
     Daglo Sync API를 사용한 STT (30초 이내 오디오)
 
@@ -118,12 +134,13 @@ async def transcribe_audio_daglo_sync(audio_file: BinaryIO) -> dict:
         "Authorization": f"Bearer {DAGLO_API_TOKEN}"
     }
 
-    # 파일 내용 읽기
-    content = audio_file.read()
-    logger.info(f"Audio file size: {len(content)} bytes")
+    logger.info(f"Audio content size: {len(audio_content)} bytes, is_wav: {is_wav}")
 
     async with httpx.AsyncClient(timeout=60.0) as client:
-        files = {"file": ("audio.webm", content, "audio/webm")}
+        if is_wav:
+            files = {"file": ("audio.wav", audio_content, "audio/wav")}
+        else:
+            files = {"file": ("audio.webm", audio_content, "audio/webm")}
 
         logger.info(f"Sending request to Daglo: {DAGLO_SYNC_URL}")
         response = await client.post(
@@ -278,8 +295,10 @@ async def transcribe_audio_whisper(audio_file: BinaryIO) -> dict:
 
     - 화자 분리 미지원
     - 한국어 지원 양호
+    - webm 형식 직접 지원
     """
     start_time = time.time()
+    logger.info("Starting Whisper STT...")
 
     client = get_openai_client()
     response = client.audio.transcriptions.create(
@@ -290,6 +309,7 @@ async def transcribe_audio_whisper(audio_file: BinaryIO) -> dict:
     )
 
     latency = time.time() - start_time
+    logger.info(f"Whisper transcript: {response.text[:100]}..." if len(response.text) > 100 else f"Whisper transcript: {response.text}")
 
     return {
         "text": response.text,
@@ -305,8 +325,9 @@ async def transcribe_audio(audio_file: BinaryIO) -> dict:
     """
     음성 파일을 텍스트로 전사 (메인 함수)
 
-    현재: Whisper 사용 (webm 형식 지원)
-    TODO: Daglo API는 webm 미지원으로 wav 변환 필요
+    전략:
+    1. Daglo API 사용 시도 (webm → wav 변환)
+    2. Daglo 실패시 Whisper fallback
 
     Args:
         audio_file: 업로드된 오디오 파일
@@ -321,11 +342,37 @@ async def transcribe_audio(audio_file: BinaryIO) -> dict:
             "provider": str           # daglo_sync, daglo_async, whisper
         }
     """
-    logger.info("transcribe_audio called, using Whisper (webm format)")
+    # 파일 내용 읽기
+    audio_content = audio_file.read()
+    logger.info(f"transcribe_audio called, audio size: {len(audio_content)} bytes")
 
-    # Whisper 사용 (webm 형식 지원)
-    # TODO: Daglo는 webm 미지원 - wav 변환 후 적용 필요
-    result = await transcribe_audio_whisper(audio_file)
+    # Daglo API 시도
+    if DAGLO_API_TOKEN:
+        try:
+            logger.info("Attempting Daglo STT with wav conversion...")
+
+            # webm → wav 변환
+            wav_content = convert_webm_to_wav(audio_content)
+
+            # Daglo API 호출
+            result = await transcribe_audio_daglo_sync(wav_content, is_wav=True)
+
+            # 빈 결과면 Whisper로 fallback
+            if not result.get("text", "").strip():
+                logger.warning("Daglo returned empty transcript, falling back to Whisper")
+                raise Exception("Empty transcript from Daglo")
+
+            logger.info(f"Daglo STT success, provider: {result.get('provider')}")
+            return result
+
+        except Exception as e:
+            logger.error(f"Daglo STT failed, falling back to Whisper: {e}")
+
+    # Whisper fallback
+    logger.info("Using Whisper STT...")
+    audio_file_like = io.BytesIO(audio_content)
+    audio_file_like.name = "audio.webm"  # Whisper needs filename
+    result = await transcribe_audio_whisper(audio_file_like)
     logger.info(f"Whisper STT complete, provider: {result.get('provider')}")
     return result
 
