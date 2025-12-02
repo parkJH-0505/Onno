@@ -8,7 +8,7 @@ import websocketService from '../services/websocket';
 export function MeetingRoom() {
   const { questions, isRecording, reset } = useMeetingStore();
 
-  const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3000';
+  const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:6001';
   const MEETING_ID = 'prototype-meeting-1';
   const USER_ID = 'user-1';
 

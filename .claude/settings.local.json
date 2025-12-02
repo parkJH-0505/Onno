@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(powershell -Command \"Stop-Process -Id 10500 -Force\")",
-      "Bash(powershell -Command \"Stop-Process -Id 37268 -Force\")"
+      "Bash(powershell -Command \"Stop-Process -Id 37268 -Force\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

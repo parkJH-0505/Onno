@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: onno-backend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: node dist/server.js
+    envVars:
+      - key: AI_SERVICE_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: "production"
