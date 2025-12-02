@@ -228,10 +228,75 @@ CREATE TABLE user_domains (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Relationship Objects (관계 객체: 거래처/고객/스타트업별 저장소)
+-- 상세: docs/Onno - 관계 객체 시스템 (Relationship Objects).md
+CREATE TABLE relationship_objects (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL, -- "A팀", "B사"
+  type VARCHAR(50) NOT NULL, -- deal, portfolio, client, candidate, partner
+  status VARCHAR(50) DEFAULT 'active', -- active, archived, completed, passed
+  industry VARCHAR(100), -- "SaaS", "E-commerce"
+  stage VARCHAR(50), -- "Series A", "Seed", "Growth"
+  tags TEXT[], -- ["B2B", "AI", "Korea"]
+  primary_contact JSONB, -- { name, email, phone, title }
+  team_members JSONB[], -- [{ name, email, role }, ...]
+  first_contact_date DATE,
+  last_interaction_date TIMESTAMP,
+  next_meeting_date TIMESTAMP,
+  description TEXT,
+  notes TEXT,
+  custom_fields JSONB,
+  engagement_score FLOAT, -- 0.0 ~ 1.0 (자동 계산)
+  importance_level VARCHAR(20), -- high, medium, low
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Relationship Data (관계 객체별 구조화된 데이터: 지표, KPI 등)
+CREATE TABLE relationship_data (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  relationship_id UUID REFERENCES relationship_objects(id) ON DELETE CASCADE,
+  category VARCHAR(50) NOT NULL, -- metrics, financials, product, team
+  key VARCHAR(100) NOT NULL, -- "MRR", "CAC", "Team Size"
+  value_text TEXT,
+  value_number FLOAT,
+  value_date DATE,
+  value_json JSONB,
+  unit VARCHAR(20), -- "$", "%", "명"
+  source VARCHAR(100), -- "피칭덱 p.12", "미팅 중 언급"
+  confidence VARCHAR(20), -- verified, estimated, unverified
+  recorded_at TIMESTAMP, -- 데이터 기준 시점
+  meeting_id UUID, -- 어느 미팅에서 나온 정보인지
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Relationship Files (관계 객체별 파일 저장소)
+CREATE TABLE relationship_files (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  relationship_id UUID REFERENCES relationship_objects(id) ON DELETE CASCADE,
+  file_name VARCHAR(255) NOT NULL,
+  file_type VARCHAR(50), -- pdf, xlsx, docx, pptx, image
+  file_size_bytes BIGINT,
+  file_url TEXT NOT NULL, -- S3 URL
+  category VARCHAR(50), -- pitch_deck, financial, contract, product_demo
+  tags TEXT[],
+  description TEXT,
+  uploaded_by UUID REFERENCES users(id),
+  meeting_id UUID, -- 어느 미팅에서 받았는지
+  extracted_text TEXT, -- AI 파싱 결과
+  ai_summary TEXT, -- GPT 요약
+  key_insights JSONB, -- AI 추출 인사이트
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Meetings
 CREATE TABLE meetings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  relationship_id UUID REFERENCES relationship_objects(id), -- 관계 객체 연결 (NEW)
   title VARCHAR(255) NOT NULL,
   type VARCHAR(50) NOT NULL, -- investment_screening, mentoring, etc.
   status VARCHAR(20) DEFAULT 'active', -- active, completed, cancelled
@@ -345,7 +410,14 @@ CREATE TABLE integrations (
 );
 
 -- Indexes
+CREATE INDEX idx_relationship_objects_user_id ON relationship_objects(user_id);
+CREATE INDEX idx_relationship_objects_type ON relationship_objects(type);
+CREATE INDEX idx_relationship_objects_status ON relationship_objects(status);
+CREATE INDEX idx_relationship_data_relationship_id ON relationship_data(relationship_id);
+CREATE INDEX idx_relationship_data_category ON relationship_data(category);
+CREATE INDEX idx_relationship_files_relationship_id ON relationship_files(relationship_id);
 CREATE INDEX idx_meetings_user_id ON meetings(user_id);
+CREATE INDEX idx_meetings_relationship_id ON meetings(relationship_id);
 CREATE INDEX idx_meetings_status ON meetings(status);
 CREATE INDEX idx_transcripts_meeting_id ON transcripts(meeting_id);
 CREATE INDEX idx_ai_questions_meeting_id ON ai_questions(meeting_id);
@@ -367,6 +439,8 @@ interface VectorRecord {
   metadata: {
     meeting_id: string;
     user_id: string;
+    relationship_id?: string; // 관계 객체 ID (NEW)
+    relationship_name?: string; // "A팀", "B사" (NEW)
     speaker: string;
     text: string; // 원본 텍스트
     timestamp: number; // Unix timestamp
@@ -374,7 +448,17 @@ interface VectorRecord {
   };
 }
 
-// Query 예시
+// Query 예시 1: 특정 관계 객체의 과거 대화 검색
+pinecone.query({
+  vector: query_embedding,
+  topK: 5,
+  filter: {
+    user_id: { $eq: "user_123" },
+    relationship_id: { $eq: "rel_a팀" } // A팀과의 과거 대화만 검색
+  }
+});
+
+// Query 예시 2: 도메인별 검색 (기존)
 pinecone.query({
   vector: query_embedding,
   topK: 5,
