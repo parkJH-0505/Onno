@@ -305,9 +305,8 @@ async def transcribe_audio(audio_file: BinaryIO) -> dict:
     """
     음성 파일을 텍스트로 전사 (메인 함수)
 
-    전략:
-    1. Daglo API 토큰이 있으면 Daglo Sync API 사용
-    2. Daglo 실패시 Whisper fallback
+    현재: Whisper 사용 (webm 형식 지원)
+    TODO: Daglo API는 webm 미지원으로 wav 변환 필요
 
     Args:
         audio_file: 업로드된 오디오 파일
@@ -322,24 +321,10 @@ async def transcribe_audio(audio_file: BinaryIO) -> dict:
             "provider": str           # daglo_sync, daglo_async, whisper
         }
     """
-    logger.info(f"transcribe_audio called, DAGLO_API_TOKEN exists: {bool(DAGLO_API_TOKEN)}")
+    logger.info("transcribe_audio called, using Whisper (webm format)")
 
-    # Daglo API 토큰 확인
-    if DAGLO_API_TOKEN:
-        try:
-            logger.info("Attempting Daglo STT...")
-            result = await transcribe_audio_daglo_sync(audio_file)
-            logger.info(f"Daglo STT success, provider: {result.get('provider')}")
-            return result
-        except Exception as e:
-            logger.error(f"Daglo STT failed, falling back to Whisper: {e}")
-            # 파일 포인터 리셋
-            audio_file.seek(0)
-    else:
-        logger.warning("DAGLO_API_TOKEN not set, using Whisper directly")
-
-    # Whisper fallback
-    logger.info("Using Whisper STT...")
+    # Whisper 사용 (webm 형식 지원)
+    # TODO: Daglo는 webm 미지원 - wav 변환 후 적용 필요
     result = await transcribe_audio_whisper(audio_file)
     logger.info(f"Whisper STT complete, provider: {result.get('provider')}")
     return result
