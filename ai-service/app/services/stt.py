@@ -1,11 +1,18 @@
-from openai import OpenAI
 import time
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# OpenAI 클라이언트는 필요할 때만 초기화 (Mock 모드에서는 사용 안 함)
+_client = None
+
+def get_client():
+    global _client
+    if _client is None:
+        from openai import OpenAI
+        _client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    return _client
 
 async def transcribe_audio(audio_file):
     """
@@ -23,6 +30,7 @@ async def transcribe_audio(audio_file):
     """
     start_time = time.time()
 
+    client = get_client()
     response = client.audio.transcriptions.create(
         model="whisper-1",
         file=audio_file,
