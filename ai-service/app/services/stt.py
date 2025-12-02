@@ -7,13 +7,18 @@ import time
 import os
 import asyncio
 import httpx
+import logging
 from typing import BinaryIO
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# 로깅 설정
+logger = logging.getLogger(__name__)
+
 # Daglo API 설정
 DAGLO_API_TOKEN = os.getenv("DAGLO_API_TOKEN")
+logger.info(f"DAGLO_API_TOKEN configured: {bool(DAGLO_API_TOKEN)}")
 DAGLO_ASYNC_URL = "https://apis.daglo.ai/stt/v1/async/transcripts"
 DAGLO_SYNC_URL = "https://apis.daglo.ai/stt/v1/sync/transcripts"
 
@@ -107,6 +112,7 @@ async def transcribe_audio_daglo_sync(audio_file: BinaryIO) -> dict:
     - 화자 분리 미지원 (Async에서만 지원)
     """
     start_time = time.time()
+    logger.info("Starting Daglo Sync STT...")
 
     headers = {
         "Authorization": f"Bearer {DAGLO_API_TOKEN}"
@@ -114,24 +120,31 @@ async def transcribe_audio_daglo_sync(audio_file: BinaryIO) -> dict:
 
     # 파일 내용 읽기
     content = audio_file.read()
+    logger.info(f"Audio file size: {len(content)} bytes")
 
     async with httpx.AsyncClient(timeout=60.0) as client:
         files = {"file": ("audio.webm", content, "audio/webm")}
 
+        logger.info(f"Sending request to Daglo: {DAGLO_SYNC_URL}")
         response = await client.post(
             DAGLO_SYNC_URL,
             headers=headers,
             files=files
         )
 
+        logger.info(f"Daglo response status: {response.status_code}")
+
         if response.status_code != 200:
+            logger.error(f"Daglo API error: {response.status_code} - {response.text}")
             raise Exception(f"Daglo API error: {response.status_code} - {response.text}")
 
         result = response.json()
+        logger.info(f"Daglo response: {result}")
 
     latency = time.time() - start_time
 
     transcript = result.get("sttResult", {}).get("transcript", "")
+    logger.info(f"Daglo transcript: {transcript[:100]}..." if len(transcript) > 100 else f"Daglo transcript: {transcript}")
 
     return {
         "text": transcript,
@@ -309,17 +322,27 @@ async def transcribe_audio(audio_file: BinaryIO) -> dict:
             "provider": str           # daglo_sync, daglo_async, whisper
         }
     """
+    logger.info(f"transcribe_audio called, DAGLO_API_TOKEN exists: {bool(DAGLO_API_TOKEN)}")
+
     # Daglo API 토큰 확인
     if DAGLO_API_TOKEN:
         try:
-            return await transcribe_audio_daglo_sync(audio_file)
+            logger.info("Attempting Daglo STT...")
+            result = await transcribe_audio_daglo_sync(audio_file)
+            logger.info(f"Daglo STT success, provider: {result.get('provider')}")
+            return result
         except Exception as e:
-            print(f"Daglo STT failed, falling back to Whisper: {e}")
+            logger.error(f"Daglo STT failed, falling back to Whisper: {e}")
             # 파일 포인터 리셋
             audio_file.seek(0)
+    else:
+        logger.warning("DAGLO_API_TOKEN not set, using Whisper directly")
 
     # Whisper fallback
-    return await transcribe_audio_whisper(audio_file)
+    logger.info("Using Whisper STT...")
+    result = await transcribe_audio_whisper(audio_file)
+    logger.info(f"Whisper STT complete, provider: {result.get('provider')}")
+    return result
 
 
 # Legacy function for compatibility
