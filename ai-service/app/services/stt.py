@@ -25,6 +25,22 @@ logger.info(f"DAGLO_API_TOKEN configured: {bool(DAGLO_API_TOKEN)}")
 DAGLO_ASYNC_URL = "https://apis.daglo.ai/stt/v1/async/transcripts"
 DAGLO_SYNC_URL = "https://apis.daglo.ai/stt/v1/sync/transcripts"
 
+# Whisper 할루시네이션 패턴 (무음이나 노이즈에서 생성되는 가짜 텍스트)
+HALLUCINATION_PATTERNS = [
+    "시청해 주셔서 감사합니다",
+    "시청해주셔서 감사합니다",
+    "구독과 좋아요",
+    "구독 좋아요 댓글",
+    "좋아요와 구독",
+    "다음 영상에서",
+    "감사합니다!",
+    "Thank you for watching",
+    "Please subscribe",
+    "MBC 뉴스",
+    "KBS 뉴스",
+    "SBS 뉴스",
+]
+
 # Whisper fallback용 OpenAI 클라이언트 (필요시)
 _openai_client = None
 
@@ -311,6 +327,20 @@ async def transcribe_audio_daglo_async(audio_url: str) -> dict:
         raise Exception("Daglo transcription timeout")
 
 
+def is_hallucination(text: str) -> bool:
+    """Whisper 할루시네이션 패턴 감지"""
+    if not text or len(text.strip()) < 2:
+        return True
+
+    text_lower = text.lower().strip()
+    for pattern in HALLUCINATION_PATTERNS:
+        if pattern.lower() in text_lower:
+            logger.warning(f"Detected hallucination pattern: '{pattern}' in '{text}'")
+            return True
+
+    return False
+
+
 async def transcribe_audio_whisper(audio_file: BinaryIO) -> dict:
     """
     OpenAI Whisper API를 사용한 STT (Fallback)
@@ -331,11 +361,18 @@ async def transcribe_audio_whisper(audio_file: BinaryIO) -> dict:
     )
 
     latency = time.time() - start_time
-    logger.info(f"Whisper transcript: {response.text[:100]}..." if len(response.text) > 100 else f"Whisper transcript: {response.text}")
+    transcript = response.text
+
+    # 할루시네이션 체크
+    if is_hallucination(transcript):
+        logger.warning(f"Whisper hallucination detected, returning empty: '{transcript}'")
+        transcript = ""
+
+    logger.info(f"Whisper transcript: {transcript[:100]}..." if len(transcript) > 100 else f"Whisper transcript: {transcript}")
 
     return {
-        "text": response.text,
-        "formatted_text": response.text,
+        "text": transcript,
+        "formatted_text": transcript,
         "segments": [],
         "duration": response.duration,
         "latency": latency,

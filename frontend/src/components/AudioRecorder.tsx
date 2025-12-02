@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useMeetingStore } from '../stores/meetingStore';
 
 interface AudioRecorderProps {
@@ -10,13 +10,33 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
   const [error, setError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const intervalRef = useRef<number | null>(null);
+  const lastSentIndexRef = useRef<number>(0);
 
   const { setRecording } = useMeetingStore();
+
+  // 누적된 오디오를 전송하는 함수
+  const sendAccumulatedAudio = useCallback(() => {
+    if (chunksRef.current.length > lastSentIndexRef.current) {
+      // 모든 chunk를 합쳐서 하나의 blob으로 만듦
+      const allChunks = chunksRef.current.slice(0, chunksRef.current.length);
+      const audioBlob = new Blob(allChunks, { type: 'audio/webm' });
+
+      if (audioBlob.size > 1000) { // 최소 1KB 이상만 전송
+        console.log(`Sending accumulated audio: ${audioBlob.size} bytes (${allChunks.length} chunks)`);
+        onAudioChunk(audioBlob);
+        lastSentIndexRef.current = chunksRef.current.length;
+      }
+    }
+  }, [onAudioChunk]);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
+      chunksRef.current = [];
+      lastSentIndexRef.current = 0;
 
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm'
@@ -24,7 +44,7 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
-          onAudioChunk(e.data);
+          chunksRef.current.push(e.data);
         }
       };
 
@@ -33,9 +53,15 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
         setError('녹음 중 오류가 발생했습니다.');
       };
 
-      // 5초마다 chunk 전송
-      mediaRecorder.start(5000);
+      // 1초마다 데이터 수집 (작은 chunk로)
+      mediaRecorder.start(1000);
       mediaRecorderRef.current = mediaRecorder;
+
+      // 5초마다 누적된 오디오 전송
+      intervalRef.current = window.setInterval(() => {
+        sendAccumulatedAudio();
+      }, 5000);
+
       setIsRecording(true);
       setRecording(true);
       setError(null);
@@ -47,14 +73,24 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
   };
 
   const stopRecording = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
     }
+
+    // 마지막 남은 오디오 전송
+    sendAccumulatedAudio();
 
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
 
+    chunksRef.current = [];
+    lastSentIndexRef.current = 0;
     setIsRecording(false);
     setRecording(false);
   };
@@ -62,7 +98,15 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
   useEffect(() => {
     return () => {
       // Cleanup on unmount
-      stopRecording();
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
     };
   }, []);
 
