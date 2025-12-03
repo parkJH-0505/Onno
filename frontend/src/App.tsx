@@ -2,39 +2,47 @@ import { useState, useEffect } from 'react';
 import { MeetingRoom } from './components/MeetingRoom';
 import { MeetingDetail } from './components/MeetingDetail';
 import { MeetingHistory } from './components/MeetingHistory';
-import { AuthPage } from './pages/AuthPage';
 import { RelationshipListPage } from './pages/RelationshipListPage';
 import { RelationshipDetailPage } from './pages/RelationshipDetailPage';
+import { DashboardPage } from './pages/DashboardPage';
 import { RelationshipFormModal } from './components/RelationshipFormModal';
+import { BottomNavigation } from './components/BottomNavigation';
 import { ToastContainer } from './components/ui/ToastContainer';
 import { useAuthStore } from './stores/authStore';
+import { useNavigationStore } from './stores/navigationStore';
 import type { RelationshipObject } from './services/api';
 import './App.css';
 
-type View = 'auth' | 'history' | 'meeting' | 'detail' | 'relationships' | 'relationship-detail';
-
 function App() {
   const { token, checkAuth, loginAsGuest, user } = useAuthStore();
-  const [view, setView] = useState<View>('relationships'); // 관계 목록이 메인 화면
-  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
-  const [selectedRelationshipId, setSelectedRelationshipId] = useState<string | null>(null);
-  const [selectedRelationshipName, setSelectedRelationshipName] = useState<string | null>(null);
+  const {
+    activeTab,
+    setActiveTab,
+    isNavigationVisible,
+    setNavigationVisible,
+    subView,
+    clearSubView,
+    meetingContext,
+    startMeetingWithRelationship,
+    clearMeetingContext,
+  } = useNavigationStore();
+
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [showRelationshipModal, setShowRelationshipModal] = useState(false);
   const [editingRelationship, setEditingRelationship] = useState<RelationshipObject | null>(null);
+
+  // 회의 모드 (MeetingRoom 표시 여부)
+  const [isMeetingMode, setIsMeetingMode] = useState(false);
 
   // 앱 시작 시 인증 상태 확인 및 자동 게스트 로그인
   useEffect(() => {
     const init = async () => {
       if (token) {
-        // 기존 토큰이 있으면 검증
         const isValid = await checkAuth();
         if (!isValid) {
-          // 토큰이 유효하지 않으면 게스트 로그인
           await loginAsGuest();
         }
       } else {
-        // 토큰이 없으면 자동 게스트 로그인
         await loginAsGuest();
       }
       setIsAuthChecked(true);
@@ -49,61 +57,46 @@ function App() {
     }
   }, [user]);
 
-  // 기존 회의 클릭 → 상세보기 (읽기 전용)
-  const handleSelectMeeting = (meetingId: string) => {
-    setSelectedMeetingId(meetingId);
-    setView('detail');
-  };
-
-  // 새 회의 시작
-  const handleNewMeeting = () => {
-    setSelectedMeetingId(null);
-    setView('meeting');
-  };
-
-  const handleBackToHistory = () => {
-    setView('history');
-    setSelectedMeetingId(null);
-  };
-
-  const handleGoToAuth = () => {
-    setView('auth');
-  };
-
-  // 관계 관련 핸들러
-  const handleSelectRelationship = (relationshipId: string) => {
-    setSelectedRelationshipId(relationshipId);
-    setView('relationship-detail');
-  };
-
-  const handleBackToRelationships = () => {
-    setView('relationships');
-    setSelectedRelationshipId(null);
-    setSelectedRelationshipName(null);
-  };
-
-  // 회의 종료 후 관계 상세 페이지로 돌아가기
-  const handleMeetingEnd = () => {
-    if (selectedRelationshipId) {
-      // 관계에서 시작한 회의 → 해당 관계 상세 페이지로 돌아가기 (새로고침 트리거)
-      const relationshipId = selectedRelationshipId;
-      setSelectedRelationshipId(null);
-      setSelectedRelationshipName(null);
-      setTimeout(() => {
-        setSelectedRelationshipId(relationshipId);
-        setView('relationship-detail');
-      }, 0);
-    } else {
-      // 일반 회의 → 회의 히스토리로
-      handleBackToHistory();
+  // 회의 시작
+  const handleStartMeeting = (relationshipId?: string, relationshipName?: string) => {
+    if (relationshipId) {
+      startMeetingWithRelationship(relationshipId, relationshipName);
     }
+    setIsMeetingMode(true);
+    setNavigationVisible(false);
   };
 
-  // 관계에서 회의 시작
-  const handleStartMeetingWithRelationship = (relationshipId: string, relationshipName?: string) => {
-    setSelectedRelationshipId(relationshipId);
-    setSelectedRelationshipName(relationshipName || null);
-    setView('meeting');
+  // 회의 종료
+  const handleMeetingEnd = () => {
+    setIsMeetingMode(false);
+    setNavigationVisible(true);
+
+    // 관계에서 시작한 회의면 해당 관계 상세로 돌아가기
+    if (meetingContext.relationshipId) {
+      setActiveTab('relationships');
+      // subView는 유지 - 관계 상세 페이지가 refresh 되도록
+    }
+    clearMeetingContext();
+  };
+
+  // 관계 상세에서 뒤로가기
+  const handleBackFromRelationshipDetail = () => {
+    clearSubView('relationships');
+  };
+
+  // 회의 상세에서 뒤로가기
+  const handleBackFromMeetingDetail = () => {
+    clearSubView('meetings');
+  };
+
+  // 관계 선택 (목록에서)
+  const handleSelectRelationship = (relationshipId: string) => {
+    useNavigationStore.getState().goToRelationshipDetail(relationshipId);
+  };
+
+  // 회의 선택 (목록에서)
+  const handleSelectMeeting = (meetingId: string) => {
+    useNavigationStore.getState().goToMeetingDetail(meetingId);
   };
 
   // 관계 생성/편집 모달
@@ -125,14 +118,15 @@ function App() {
   const handleSaveRelationship = () => {
     setShowRelationshipModal(false);
     setEditingRelationship(null);
-    // 페이지 새로고침 트리거 (간단한 방식)
-    if (view === 'relationships') {
-      setView('auth');
-      setTimeout(() => setView('relationships'), 0);
-    } else if (view === 'relationship-detail' && selectedRelationshipId) {
-      const id = selectedRelationshipId;
-      setSelectedRelationshipId(null);
-      setTimeout(() => setSelectedRelationshipId(id), 0);
+    // 새로고침 트리거
+    if (activeTab === 'relationships') {
+      const currentDetailId = subView.relationships.detailId;
+      clearSubView('relationships');
+      if (currentDetailId) {
+        setTimeout(() => {
+          useNavigationStore.getState().goToRelationshipDetail(currentDetailId);
+        }, 0);
+      }
     }
   };
 
@@ -146,51 +140,109 @@ function App() {
     );
   }
 
-  return (
-    <>
-      {view === 'auth' && (
-        <AuthPage
-          onSuccess={() => setView('meeting')}
-          onSkip={() => setView('meeting')}
-        />
-      )}
-      {view === 'history' && (
-        <MeetingHistory
-          onSelectMeeting={handleSelectMeeting}
-          onNewMeeting={handleNewMeeting}
-          onGoToRelationships={handleBackToRelationships}
-        />
-      )}
-      {view === 'meeting' && (
+  // 회의 모드일 때는 MeetingRoom만 표시
+  if (isMeetingMode) {
+    return (
+      <>
         <MeetingRoom
           onBack={handleMeetingEnd}
-          onGoToAuth={handleGoToAuth}
-          relationshipId={selectedRelationshipId || undefined}
-          relationshipName={selectedRelationshipName || undefined}
+          onGoToAuth={() => setIsMeetingMode(false)}
+          relationshipId={meetingContext.relationshipId || undefined}
+          relationshipName={meetingContext.relationshipName || undefined}
         />
-      )}
-      {view === 'detail' && selectedMeetingId && (
-        <MeetingDetail
-          meetingId={selectedMeetingId}
-          onBack={handleBackToHistory}
-        />
-      )}
-      {view === 'relationships' && (
-        <RelationshipListPage
-          onSelectRelationship={handleSelectRelationship}
-          onCreateRelationship={handleCreateRelationship}
-          onStartMeeting={handleStartMeetingWithRelationship}
-          onGoToHistory={() => setView('history')}
-        />
-      )}
-      {view === 'relationship-detail' && selectedRelationshipId && (
-        <RelationshipDetailPage
-          relationshipId={selectedRelationshipId}
-          onBack={handleBackToRelationships}
-          onStartMeeting={handleStartMeetingWithRelationship}
-          onEdit={handleEditRelationship}
-        />
-      )}
+        <ToastContainer />
+      </>
+    );
+  }
+
+  // 탭별 콘텐츠 렌더링
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return (
+          <DashboardPage
+            onSelectRelationship={handleSelectRelationship}
+            onSelectMeeting={handleSelectMeeting}
+            onViewAllRelationships={() => setActiveTab('relationships')}
+            onViewAllMeetings={() => setActiveTab('meetings')}
+            onStartMeeting={() => handleStartMeeting()}
+            onViewProgress={() => setActiveTab('profile')}
+          />
+        );
+
+      case 'relationships':
+        // 관계 상세 페이지 표시
+        if (subView.relationships.detailId) {
+          return (
+            <RelationshipDetailPage
+              relationshipId={subView.relationships.detailId}
+              onBack={handleBackFromRelationshipDetail}
+              onStartMeeting={handleStartMeeting}
+              onEdit={handleEditRelationship}
+            />
+          );
+        }
+        // 관계 목록 페이지
+        return (
+          <RelationshipListPage
+            onSelectRelationship={handleSelectRelationship}
+            onCreateRelationship={handleCreateRelationship}
+            onStartMeeting={handleStartMeeting}
+            onGoToHistory={() => setActiveTab('meetings')}
+          />
+        );
+
+      case 'meetings':
+        // 회의 상세 페이지 표시
+        if (subView.meetings.detailId) {
+          return (
+            <MeetingDetail
+              meetingId={subView.meetings.detailId}
+              onBack={handleBackFromMeetingDetail}
+            />
+          );
+        }
+        // 회의 목록 페이지
+        return (
+          <MeetingHistory
+            onSelectMeeting={handleSelectMeeting}
+            onNewMeeting={() => handleStartMeeting()}
+            onGoToRelationships={() => setActiveTab('relationships')}
+          />
+        );
+
+      case 'profile':
+        // Phase 4-3에서 ProfilePage로 교체 예정
+        return (
+          <div className="profile-placeholder">
+            <div className="profile-placeholder__header">
+              <h1>👤 내 프로필</h1>
+              <p>준비 중입니다.</p>
+            </div>
+            <div className="profile-placeholder__info">
+              <p><strong>이메일:</strong> {user?.email || 'guest@onno.ai'}</p>
+              <p><strong>이름:</strong> {user?.name || '게스트'}</p>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      <div className={isNavigationVisible ? 'app-with-navigation' : ''}>
+        {renderTabContent()}
+      </div>
+
+      <BottomNavigation
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        visible={isNavigationVisible}
+      />
+
       {showRelationshipModal && (
         <RelationshipFormModal
           relationship={editingRelationship}
@@ -198,6 +250,7 @@ function App() {
           onSave={handleSaveRelationship}
         />
       )}
+
       <ToastContainer />
     </>
   );

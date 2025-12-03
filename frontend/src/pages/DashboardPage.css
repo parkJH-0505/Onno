@@ -1,0 +1,152 @@
+.dashboard-page {
+  min-height: 100vh;
+  background: var(--bg-secondary);
+}
+
+.dashboard-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 20px 20px;
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.dashboard-page__greeting h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0 0 4px 0;
+}
+
+.dashboard-page__greeting p {
+  font-size: 14px;
+  color: var(--gray-500);
+  margin: 0;
+}
+
+.dashboard-page__start-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.dashboard-page__start-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.dashboard-page__start-btn:active {
+  transform: translateY(0);
+}
+
+.dashboard-page__content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-page__section {
+  /* 섹션 기본 스타일 */
+}
+
+/* 퀵 액션 그리드 */
+.dashboard-page__quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.dashboard-page__quick-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dashboard-page__quick-action:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.dashboard-page__quick-action-icon {
+  font-size: 24px;
+}
+
+.dashboard-page__quick-action-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+/* 모바일 최적화 */
+@media (max-width: 480px) {
+  .dashboard-page__header {
+    padding: 20px 16px 16px;
+  }
+
+  .dashboard-page__greeting h1 {
+    font-size: 18px;
+  }
+
+  .dashboard-page__greeting p {
+    font-size: 13px;
+  }
+
+  .dashboard-page__start-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .dashboard-page__content {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .dashboard-page__quick-actions {
+    gap: 10px;
+  }
+
+  .dashboard-page__quick-action {
+    padding: 14px 10px;
+  }
+
+  .dashboard-page__quick-action-icon {
+    font-size: 22px;
+  }
+
+  .dashboard-page__quick-action-label {
+    font-size: 11px;
+  }
+}
+
+/* 태블릿 이상 */
+@media (min-width: 768px) {
+  .dashboard-page__content {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+
+  .dashboard-page__header {
+    max-width: 640px;
+    margin: 0 auto;
+    border-radius: 0 0 16px 16px;
+  }
+}

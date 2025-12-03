@@ -1,0 +1,126 @@
+.level-summary-card {
+  background: linear-gradient(135deg, var(--primary) 0%, #6366F1 100%);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  color: white;
+}
+
+.level-summary-card--loading,
+.level-summary-card--empty {
+  background: white;
+  border: 1px solid var(--gray-200);
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.level-summary-card__skeleton {
+  width: 100%;
+}
+
+.skeleton-line {
+  height: 16px;
+  background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.skeleton-line--short {
+  width: 40%;
+}
+
+.skeleton-line--medium {
+  width: 70%;
+}
+
+.skeleton-line--long {
+  width: 100%;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.level-summary-card__empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.level-summary-card__empty-text {
+  color: var(--gray-500);
+  font-size: 14px;
+  text-align: center;
+}
+
+.level-summary-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.level-summary-card__domain {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.level-summary-card__level {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.level-summary-card__progress {
+  margin-bottom: 16px;
+}
+
+.level-summary-card__progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.level-summary-card__progress-fill {
+  height: 100%;
+  background: white;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.level-summary-card__progress-text {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.level-summary-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.level-summary-card__hint {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.level-summary-card__details-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.level-summary-card__details-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
