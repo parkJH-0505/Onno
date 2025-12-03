@@ -299,3 +299,150 @@ export const meetingApi = {
 };
 
 export type { Meeting, MeetingDetail };
+
+// ============ Personalization API (Phase 3) ============
+
+export type DomainType = 'INVESTMENT_SCREENING' | 'MENTORING' | 'SALES' | 'PRODUCT_REVIEW' | 'TEAM_MEETING' | 'USER_INTERVIEW' | 'GENERAL';
+export type PersonaType = 'ANALYST' | 'BUDDY' | 'GUARDIAN' | 'VISIONARY';
+export type FeedbackRating = 'THUMBS_UP' | 'THUMBS_DOWN';
+
+export interface UserDomainLevel {
+  id: string;
+  userId: string;
+  domain: DomainType;
+  level: number;
+  experiencePoints: number;
+  unlockedFeatures: string[];
+  persona: PersonaType;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserProgress {
+  totalXp: number;
+  primaryDomain: DomainType;
+  primaryLevel: number;
+  allDomains: Array<{
+    domain: DomainType;
+    level: number;
+    xp: number;
+    persona: PersonaType;
+    features: string[];
+  }>;
+  recentLevelUps: Array<{
+    domain: DomainType;
+    oldLevel: number;
+    newLevel: number;
+    xpAtLevelUp: number;
+    newFeatures: string[];
+    createdAt: string;
+  }>;
+}
+
+export interface XpInfo {
+  currentXp: number;
+  nextLevelXp: number | null;
+  remaining: number | null;
+}
+
+export interface MeetingSummary {
+  id: string;
+  meetingId: string;
+  summary: string;
+  keyPoints: string[];
+  decisions: string[];
+  actionItems: string[];
+  keyQuestions: string[];
+  missedQuestions: string[];
+  suggestedDataUpdates?: Record<string, unknown>;
+  nextMeetingAgenda: string[];
+  generatedAt: string;
+}
+
+export const personalizationApi = {
+  // 사용자 전체 진행 상황 조회
+  getProgress: (userId: string) =>
+    fetchApi<UserProgress>(`/api/personalization/users/${userId}/progress`),
+
+  // 특정 도메인 레벨 조회
+  getDomainLevel: (userId: string, domain: DomainType) =>
+    fetchApi<UserDomainLevel>(`/api/personalization/users/${userId}/domains/${domain}/level`),
+
+  // 모든 도메인 레벨 조회
+  getAllDomainLevels: (userId: string) =>
+    fetchApi<UserDomainLevel[]>(`/api/personalization/users/${userId}/domains`),
+
+  // 다음 레벨까지 남은 XP
+  getXpToNextLevel: (userId: string, domain: DomainType) =>
+    fetchApi<XpInfo>(`/api/personalization/users/${userId}/domains/${domain}/next-level`),
+
+  // 페르소나 조회
+  getPersona: (userId: string, domain: DomainType) =>
+    fetchApi<{ persona: PersonaType }>(`/api/personalization/users/${userId}/domains/${domain}/persona`),
+
+  // 페르소나 설정
+  setPersona: (userId: string, domain: DomainType, persona: PersonaType) =>
+    fetchApi<UserDomainLevel>(`/api/personalization/users/${userId}/domains/${domain}/persona`, {
+      method: 'PUT',
+      body: JSON.stringify({ persona }),
+    }),
+
+  // 질문 피드백 추가
+  addQuestionFeedback: (userId: string, data: {
+    questionId: string;
+    rating: FeedbackRating;
+    tags?: string[];
+    comment?: string;
+  }) =>
+    fetchApi<{ id: string }>(`/api/personalization/users/${userId}/question-feedback`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // 해금된 기능 조회
+  getFeatures: (userId: string, domain: DomainType) =>
+    fetchApi<string[]>(`/api/personalization/users/${userId}/domains/${domain}/features`),
+
+  // 레벨 히스토리
+  getLevelHistory: (userId: string, domain?: DomainType) => {
+    const url = domain
+      ? `/api/personalization/users/${userId}/level-history?domain=${domain}`
+      : `/api/personalization/users/${userId}/level-history`;
+    return fetchApi<UserProgress['recentLevelUps']>(url);
+  },
+};
+
+// ============ Summary API (Phase 3) ============
+
+export const summaryApi = {
+  // 회의 요약 조회
+  get: (meetingId: string) =>
+    fetchApi<MeetingSummary>(`/api/meetings/${meetingId}/summary`),
+
+  // 회의 요약 생성 (수동)
+  generate: (meetingId: string) =>
+    fetchApi<MeetingSummary>(`/api/meetings/${meetingId}/summary/generate`, {
+      method: 'POST',
+    }),
+
+  // 요약 수정
+  update: (meetingId: string, data: Partial<MeetingSummary>) =>
+    fetchApi<MeetingSummary>(`/api/meetings/${meetingId}/summary`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  // 데이터 업데이트 적용
+  applyUpdates: (meetingId: string) =>
+    fetchApi<{ relationshipId: string; appliedUpdates: Record<string, unknown> }>(
+      `/api/meetings/${meetingId}/summary/apply-updates`,
+      { method: 'POST' }
+    ),
+
+  // 액션 아이템 완료 처리
+  completeActionItem: (meetingId: string, index: number) =>
+    fetchApi<{ actionItems: string[] }>(
+      `/api/meetings/${meetingId}/summary/action-items/${index}/complete`,
+      { method: 'POST' }
+    ),
+};

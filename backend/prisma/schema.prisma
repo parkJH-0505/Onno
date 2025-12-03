@@ -1,6 +1,7 @@
 // Onno Meeting Storage Schema
 // Phase 2-2: 회의 저장 시스템
 // Phase 2-3: 개인화 Lv.1
+// Phase 3: 나만의 온노 - 개인화 시스템 강화
 
 generator client {
   provider = "prisma-client-js"
@@ -36,6 +37,7 @@ model User {
   meetings    Meeting[]
   questionActions QuestionAction[]
   relationships   RelationshipObject[]
+  domainLevels    UserDomainLevel[]  // Phase 3: 도메인별 레벨
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -218,6 +220,7 @@ model Meeting {
   // 관계
   transcripts Transcript[]
   questions   Question[]
+  meetingSummary MeetingSummary?  // Phase 3: AI 생성 상세 요약
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -297,6 +300,9 @@ model Question {
   // 맥락
   context     String?  // 질문 생성 맥락 (어떤 발화에서 생성됐는지)
 
+  // Phase 3: 피드백 상세
+  feedbackDetails QuestionFeedbackDetail[]
+
   createdAt   DateTime @default(now())
 
   @@index([meetingId])
@@ -319,4 +325,118 @@ enum QuestionFeedback {
   HELPFUL
   NOT_HELPFUL
   SKIP
+}
+
+// ============ Phase 3: 나만의 온노 - 도메인 레벨 시스템 ============
+
+// 사용자 도메인별 레벨 및 XP
+model UserDomainLevel {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  domain      DomainType
+  level       Int      @default(1)  // 1 ~ 5
+  experiencePoints Int @default(0)  // XP
+
+  // 해금된 기능
+  unlockedFeatures String[]  // ["past_context", "benchmark", "risk_detection", ...]
+
+  // 페르소나 설정
+  persona     PersonaType @default(ANALYST)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, domain])
+  @@index([userId])
+  @@index([domain])
+}
+
+enum DomainType {
+  INVESTMENT_SCREENING  // 투자 심사
+  MENTORING             // 멘토링
+  SALES                 // 세일즈
+  PRODUCT_REVIEW        // 제품 리뷰
+  TEAM_MEETING          // 팀 1:1
+  USER_INTERVIEW        // 사용자 인터뷰
+  GENERAL               // 일반
+}
+
+enum PersonaType {
+  ANALYST     // 분석가 - 숫자/데이터 중심
+  BUDDY       // 동료 - 협력적/공감 중심
+  GUARDIAN    // 수호자 - 리스크 관리 중심
+  VISIONARY   // 비전가 - 기회/미래 중심
+}
+
+// 레벨업 히스토리
+model LevelHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  domain      DomainType
+
+  oldLevel    Int
+  newLevel    Int
+  xpAtLevelUp Int
+
+  // 해금된 기능
+  newFeatures String[]
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([domain])
+}
+
+// 질문 피드백 상세 (학습용)
+model QuestionFeedbackDetail {
+  id          String   @id @default(cuid())
+  userId      String
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  rating      FeedbackRating
+  tags        String[]  // ["timing_good", "too_aggressive", "helpful", ...]
+  comment     String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([questionId])
+}
+
+enum FeedbackRating {
+  THUMBS_UP
+  THUMBS_DOWN
+}
+
+// 회의 요약 (AI 생성)
+model MeetingSummary {
+  id          String   @id @default(cuid())
+  meetingId   String   @unique
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  // 요약 내용
+  summary     String   // 전체 요약
+  keyPoints   String[] // 핵심 포인트
+  decisions   String[] // 결정 사항
+  actionItems String[] // 후속 조치
+
+  // 중요 질문들
+  keyQuestions String[] // 회의 중 중요 질문
+  missedQuestions String[] // 놓친 질문 (확인 안 된 것)
+
+  // 관계 객체 데이터 업데이트 제안
+  suggestedDataUpdates Json?  // { "mrr": 60000, "cac": 25 } 등
+
+  // 다음 회의 아젠다 제안
+  nextMeetingAgenda String[]
+
+  // 메타데이터
+  generatedAt DateTime @default(now())
+  model       String?  // 생성에 사용된 AI 모델
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

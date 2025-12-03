@@ -9,8 +9,12 @@ import meetingRoutes from './routes/meetingRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import relationshipRoutes from './routes/relationshipRoutes.js';
+import personalizationRoutes from './routes/personalizationRoutes.js';
+import summaryRoutes from './routes/summaryRoutes.js';
 import * as meetingService from './services/meetingService.js';
 import * as userService from './services/userService.js';
+import * as personalizationService from './services/personalizationService.js';
+import { processMeetingEnd } from './services/summaryService.js';
 
 dotenv.config();
 
@@ -66,6 +70,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/relationships', relationshipRoutes);
+app.use('/api/personalization', personalizationRoutes);  // Phase 3: 개인화
+app.use('/api', summaryRoutes);  // Phase 3: 회의 요약
 
 // WebSocket 연결 처리
 io.on('connection', (socket) => {
@@ -354,11 +360,61 @@ io.on('connection', (socket) => {
       const dbMeetingId = activeMeetings.get(meetingId);
       if (dbMeetingId) {
         try {
-          await meetingService.endMeeting(dbMeetingId);
-          activeMeetings.delete(meetingId);
-          meetingRelationships.delete(meetingId); // 관계 추적 정리
-          lastTranscripts.delete(meetingId); // 전사 추적 정리
+          // 1. 회의 종료
+          const endedMeeting = await meetingService.endMeeting(dbMeetingId);
           console.log(`Meeting ${dbMeetingId} ended in DB`);
+
+          // 2. Phase 3: 자동 요약 생성
+          try {
+            console.log('Generating meeting summary...');
+            const summary = await processMeetingEnd(dbMeetingId);
+            console.log('Meeting summary generated:', summary.summary?.substring(0, 100));
+
+            // 요약 결과를 클라이언트에 전송
+            io.to(`meeting-${meetingId}`).emit('meeting_summary', {
+              meetingId: dbMeetingId,
+              summary,
+              timestamp: new Date().toISOString()
+            });
+          } catch (summaryError) {
+            console.error('Failed to generate summary:', summaryError);
+          }
+
+          // 3. Phase 3: XP 보상
+          if (userId) {
+            try {
+              // 사용된 질문 수 계산
+              const meeting = await meetingService.getMeeting(dbMeetingId);
+              const usedQuestions = meeting?.questions?.filter(q => q.isUsed).length || 0;
+              const meetingType = meeting?.meetingType || 'GENERAL';
+
+              const reward = await personalizationService.rewardMeetingComplete(
+                userId,
+                meetingType,
+                usedQuestions
+              );
+
+              console.log(`XP reward for user ${userId}: +${reward.totalXpEarned} XP`);
+
+              // 레벨업 알림
+              if (reward.leveledUp) {
+                io.to(`meeting-${meetingId}`).emit('level_up', {
+                  userId,
+                  newLevel: reward.newLevel,
+                  newFeatures: reward.newFeatures,
+                  timestamp: new Date().toISOString()
+                });
+                console.log(`User ${userId} leveled up to ${reward.newLevel}!`);
+              }
+            } catch (rewardError) {
+              console.error('Failed to reward XP:', rewardError);
+            }
+          }
+
+          // 추적 정리
+          activeMeetings.delete(meetingId);
+          meetingRelationships.delete(meetingId);
+          lastTranscripts.delete(meetingId);
         } catch (error) {
           console.error('Failed to end meeting in DB:', error);
         }
