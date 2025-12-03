@@ -32,7 +32,10 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
       return;
     }
 
-    const chunks = chunksRef.current;
+    // 현재 청크 복사 후 즉시 비우기
+    const chunks = [...chunksRef.current];
+    chunksRef.current.length = 0; // 배열을 새로 할당하지 않고 비우기
+
     if (chunks.length === 0) {
       return;
     }
@@ -42,10 +45,6 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
     if (audioBlob.size > 1000) {
       isSendingRef.current = true;
       console.log(`Sending audio: ${audioBlob.size} bytes (${chunks.length} chunks)`);
-
-      // 청크 비우기 (전송 전에 비워서 새 청크와 섞이지 않게)
-      chunksRef.current = [];
-
       onAudioChunkRef.current(audioBlob);
       isSendingRef.current = false;
     }
@@ -108,7 +107,7 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
 
-    chunksRef.current = [];
+    chunksRef.current.length = 0;
     isSendingRef.current = false;
     setIsRecording(false);
     setRecording(false);
