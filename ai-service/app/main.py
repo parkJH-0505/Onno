@@ -3,7 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from app.services.stt import transcribe_audio
-from app.services.question_generator import generate_questions, generate_questions_with_context
+from app.services.question_generator import (
+    generate_questions,
+    generate_questions_with_context,
+    generate_questions_with_relationship
+)
 from app.services.mock_data import mock_transcribe_audio, mock_generate_questions
 import logging
 import os
@@ -37,6 +41,24 @@ class QuestionRequest(BaseModel):
 class ContextAwareQuestionRequest(BaseModel):
     transcript: str
     previous_transcripts: Optional[List[str]] = None
+
+
+class RelationshipContext(BaseModel):
+    """관계 객체 맥락 정보"""
+    name: str
+    type: str  # STARTUP, CLIENT, PARTNER
+    industry: Optional[str] = None
+    stage: Optional[str] = None
+    notes: Optional[str] = None
+    structured_data: Optional[dict] = None  # MRR, CAC, LTV 등
+    meeting_number: int = 1
+    recent_meetings: Optional[List[dict]] = None  # 이전 미팅 요약
+
+
+class RelationshipAwareQuestionRequest(BaseModel):
+    """관계 맥락 기반 질문 생성 요청"""
+    transcript: str
+    relationship: Optional[RelationshipContext] = None
 
 
 @app.get("/health")
@@ -131,4 +153,55 @@ async def generate_questions_with_context_endpoint(request: ContextAwareQuestion
 
     except Exception as e:
         logger.error(f"Context-aware question generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/questions/generate-with-relationship")
+async def generate_questions_with_relationship_endpoint(request: RelationshipAwareQuestionRequest):
+    """
+    관계 객체 맥락을 활용한 AI 질문 생성 (Phase 2 핵심)
+
+    - 관계 객체 정보 (이름, 유형, 산업, 단계)
+    - 이전 미팅 히스토리
+    - 구조화 데이터 (MRR, CAC, LTV 등)
+    - 메모/노트
+
+    이 정보를 활용하여 맥락에 맞는 질문을 생성합니다.
+    """
+    try:
+        logger.info(f"Generating relationship-aware questions (Mock: {MOCK_MODE})")
+        logger.info(f"Transcript length: {len(request.transcript)}")
+
+        if request.relationship:
+            logger.info(f"Relationship: {request.relationship.name} ({request.relationship.type})")
+            logger.info(f"Meeting number: {request.relationship.meeting_number}")
+
+        if MOCK_MODE:
+            result = await mock_generate_questions(request.transcript)
+            logger.info(f"[MOCK] Generated {len(result['questions'])} questions")
+        else:
+            # 관계 정보를 dict로 변환
+            relationship_dict = None
+            if request.relationship:
+                relationship_dict = {
+                    "name": request.relationship.name,
+                    "type": request.relationship.type,
+                    "industry": request.relationship.industry,
+                    "stage": request.relationship.stage,
+                    "notes": request.relationship.notes,
+                    "structured_data": request.relationship.structured_data,
+                    "meeting_number": request.relationship.meeting_number,
+                    "recent_meetings": request.relationship.recent_meetings,
+                }
+
+            result = await generate_questions_with_relationship(
+                request.transcript,
+                relationship_dict
+            )
+            logger.info(f"Generated {len(result['questions'])} relationship-aware questions")
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Relationship-aware question generation error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { AudioRecorder } from './AudioRecorder';
 import { TranscriptPanel } from './TranscriptPanel';
 import { ContextPanel } from './ContextPanel';
+import { MeetingEndModal } from './MeetingEndModal';
 import { QuestionCard } from './design-system/QuestionCard';
 import { Button, GlassCard, InlineRecordButton } from './design-system';
 import { useMeetingStore } from '../stores/meetingStore';
 import { toast } from '../stores/toastStore';
+import { meetingApi, relationshipApi } from '../services/api';
 import websocketService from '../services/websocket';
 import './MeetingRoom.css';
 
@@ -20,9 +22,11 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth, relationshipId, r
   const { questions, isRecording, reset } = useMeetingStore();
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [meetingId] = useState(() => 'meeting-' + Date.now());
+  const [dbMeetingId, setDbMeetingId] = useState<string | null>(null);
   const [duration, setDuration] = useState('00:00');
   const [startTime, setStartTime] = useState<number | null>(null);
   const [contextCollapsed, setContextCollapsed] = useState(false);
+  const [showEndModal, setShowEndModal] = useState(false);
 
   const WS_URL = import.meta.env.VITE_WS_URL || 'https://onno-backend.onrender.com';
   const USER_ID = 'user-1';
@@ -65,6 +69,17 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth, relationshipId, r
         relationshipId,
         meetingType: 'INVESTMENT_1ST',
       });
+
+      // meeting_joined 이벤트에서 dbMeetingId 받기
+      const socket = websocketService.getSocket();
+      if (socket) {
+        socket.on('meeting_joined', (data: { dbMeetingId?: string }) => {
+          if (data.dbMeetingId) {
+            setDbMeetingId(data.dbMeetingId);
+          }
+        });
+      }
+
       setConnectionStatus('connected');
       toast.success(relationshipName
         ? `${relationshipName} 회의에 연결되었습니다`
@@ -85,12 +100,49 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth, relationshipId, r
     websocketService.sendAudioChunk(blob);
   };
 
-  const handleEndMeeting = () => {
-    websocketService.leaveMeeting(USER_ID, true);
-    toast.info('회의가 종료되었습니다');
-    if (onBack) {
-      onBack();
+  // 회의 종료 버튼 클릭
+  const handleEndMeetingClick = () => {
+    setShowEndModal(true);
+  };
+
+  // 모달에서 저장 후 종료
+  const handleEndMeetingSave = async (data: {
+    summary: string;
+    keyQuestions: string[];
+    structuredDataUpdates?: Record<string, string | number>;
+  }) => {
+    try {
+      // 회의 종료 API 호출 (요약, 핵심 질문 저장)
+      if (dbMeetingId) {
+        await meetingApi.end(dbMeetingId, {
+          summary: data.summary,
+          keyQuestions: data.keyQuestions,
+        });
+      }
+
+      // 관계 객체 구조화 데이터 업데이트
+      if (relationshipId && data.structuredDataUpdates && Object.keys(data.structuredDataUpdates).length > 0) {
+        await relationshipApi.updateData(relationshipId, data.structuredDataUpdates, dbMeetingId || undefined);
+      }
+
+      // WebSocket 종료
+      websocketService.leaveMeeting(USER_ID, true);
+
+      toast.success('회의가 저장되었습니다');
+      setShowEndModal(false);
+
+      if (onBack) {
+        onBack();
+      }
+    } catch (error) {
+      console.error('Failed to save meeting:', error);
+      toast.error('회의 저장에 실패했습니다');
     }
+  };
+
+  // 모달 취소 시
+  const handleEndModalClose = () => {
+    setShowEndModal(false);
   };
 
   const activeQuestions = questions.filter((q) => q.action !== 'dismissed');
@@ -145,7 +197,7 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth, relationshipId, r
             )}
           </div>
           {isRecording && (
-            <Button variant="ghost" size="sm" onClick={handleEndMeeting}>
+            <Button variant="ghost" size="sm" onClick={handleEndMeetingClick}>
               회의 종료
             </Button>
           )}
@@ -233,6 +285,16 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth, relationshipId, r
           </GlassCard>
         </div>
       </main>
+
+      {/* Meeting End Modal */}
+      {showEndModal && (
+        <MeetingEndModal
+          onClose={handleEndModalClose}
+          onSave={handleEndMeetingSave}
+          relationshipId={relationshipId}
+          relationshipName={relationshipName}
+        />
+      )}
     </div>
   );
 }

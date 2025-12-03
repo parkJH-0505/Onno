@@ -84,6 +84,10 @@ class WebSocketService {
   disconnect() {
     this.socket?.disconnect();
   }
+
+  getSocket(): Socket | null {
+    return this.socket;
+  }
 }
 
 export default new WebSocketService();

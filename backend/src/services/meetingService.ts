@@ -98,11 +98,30 @@ export async function updateMeeting(id: string, data: {
   });
 }
 
-export async function endMeeting(id: string) {
-  const meeting = await prisma.meeting.findUnique({ where: { id } });
+export interface EndMeetingOptions {
+  summary?: string;
+  keyQuestions?: string[];
+}
+
+export async function endMeeting(id: string, options?: EndMeetingOptions) {
+  const meeting = await prisma.meeting.findUnique({
+    where: { id },
+    include: { relationshipObject: true }
+  });
   if (!meeting) return null;
 
   const duration = Math.floor((Date.now() - meeting.startedAt.getTime()) / 1000);
+
+  // 핵심 질문들을 isUsed로 마킹
+  if (options?.keyQuestions && options.keyQuestions.length > 0) {
+    await prisma.question.updateMany({
+      where: {
+        meetingId: id,
+        text: { in: options.keyQuestions }
+      },
+      data: { isUsed: true }
+    });
+  }
 
   return prisma.meeting.update({
     where: { id },
@@ -110,6 +129,7 @@ export async function endMeeting(id: string) {
       status: MeetingStatus.ENDED,
       endedAt: new Date(),
       duration,
+      summary: options?.summary,
     },
   });
 }
@@ -229,6 +249,14 @@ export async function updateQuestionFeedback(id: string, data: {
       isFavorite: data.isFavorite,
       feedback: fb,
     },
+  });
+}
+
+// ============ Relationship ============
+
+export async function getMeetingCountForRelationship(relationshipId: string): Promise<number> {
+  return prisma.meeting.count({
+    where: { relationshipObjectId: relationshipId }
   });
 }
 

@@ -1,0 +1,292 @@
+/* ============================================
+   MEETING END MODAL - Design System
+   Phase 2-4: 회의 종료 시 데이터 추출/저장
+   ============================================ */
+
+.meeting-end-modal__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  padding: var(--space-4);
+}
+
+.meeting-end-modal {
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-xl);
+  animation: scaleIn var(--transition-normal) ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Header */
+.meeting-end-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.meeting-end-modal__header h2 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.meeting-end-modal__relationship {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  margin: var(--space-1) 0 0 0;
+}
+
+.meeting-end-modal__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.meeting-end-modal__close:hover {
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+}
+
+/* Content */
+.meeting-end-modal__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Section */
+.meeting-end-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.meeting-end-modal__section h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.meeting-end-modal__section h3 svg {
+  color: var(--color-primary);
+}
+
+.meeting-end-modal__hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* Textarea */
+.meeting-end-modal__section textarea {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  resize: vertical;
+  transition: all var(--transition-fast);
+  line-height: 1.5;
+}
+
+.meeting-end-modal__section textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-muted);
+}
+
+.meeting-end-modal__section textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Questions */
+.meeting-end-modal__questions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.meeting-end-modal__question {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.meeting-end-modal__question:hover {
+  background: var(--color-bg-overlay);
+  border-color: var(--color-border-hover);
+}
+
+.meeting-end-modal__question--selected {
+  background: var(--color-primary-muted);
+  border-color: var(--color-primary);
+}
+
+.meeting-end-modal__question input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--color-primary);
+}
+
+.meeting-end-modal__question-text {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.meeting-end-modal__question--selected .meeting-end-modal__question-text {
+  color: var(--color-text-primary);
+}
+
+.meeting-end-modal__question-badge {
+  flex-shrink: 0;
+  padding: 2px var(--space-2);
+  background: var(--color-success);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border-radius: var(--radius-full);
+}
+
+/* Metrics */
+.meeting-end-modal__metrics {
+  background: var(--color-bg-elevated) !important;
+}
+
+.meeting-end-modal__metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.meeting-end-modal__metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.meeting-end-modal__metric label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.meeting-end-modal__metric input {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  transition: all var(--transition-fast);
+}
+
+.meeting-end-modal__metric input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-muted);
+}
+
+.meeting-end-modal__metric input::placeholder {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+/* Actions */
+.meeting-end-modal__actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--color-border-subtle);
+  background: var(--color-bg-base);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .meeting-end-modal__overlay {
+    padding: 0;
+  }
+
+  .meeting-end-modal {
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .meeting-end-modal__metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .meeting-end-modal__actions {
+    flex-direction: column-reverse;
+  }
+
+  .meeting-end-modal__actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 400px) {
+  .meeting-end-modal__metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}

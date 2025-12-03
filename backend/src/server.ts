@@ -28,6 +28,9 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 // 현재 활성 회의 추적 (meetingId -> dbMeetingId)
 const activeMeetings = new Map<string, string>();
 
+// 회의별 관계 정보 추적 (meetingId -> relationshipId)
+const meetingRelationships = new Map<string, string>();
+
 // 회의별 마지막 전사 텍스트 추적 (중복 방지)
 const lastTranscripts = new Map<string, string>();
 
@@ -83,6 +86,9 @@ io.on('connection', (socket) => {
           meetingType: meetingType || 'GENERAL',
         });
         activeMeetings.set(meetingId, dbMeeting.id);
+        if (relationshipId) {
+          meetingRelationships.set(meetingId, relationshipId);
+        }
         console.log(`Created meeting in DB: ${dbMeeting.id}` + (relationshipId ? ` linked to relationship ${relationshipId}` : ''));
       } catch (error) {
         console.error('Failed to create meeting in DB:', error);
@@ -191,13 +197,103 @@ io.on('connection', (socket) => {
 
       // 전사가 일정 길이 이상이면 질문 생성
       if (transcript.text.length > 50) {
-        console.log('Generating questions...');
+        const relationshipId = meetingRelationships.get(meetingId);
+        let questionResponse;
 
-        const questionResponse = await axios.post(
-          `${AI_SERVICE_URL}/api/questions/generate`,
-          { transcript: transcript.text },
-          { timeout: 15000 }
-        );
+        // 관계가 있는 회의면 맥락 기반 질문 생성
+        if (relationshipId) {
+          console.log(`Generating relationship-aware questions for relationship ${relationshipId}...`);
+          try {
+            // 관계 맥락 정보 조회
+            const { PrismaClient } = await import('@prisma/client');
+            const prisma = new PrismaClient();
+
+            const relationship = await prisma.relationshipObject.findUnique({
+              where: { id: relationshipId },
+              include: {
+                meetings: {
+                  where: { status: 'ENDED' },
+                  orderBy: { endedAt: 'desc' },
+                  take: 3,
+                  select: {
+                    id: true,
+                    title: true,
+                    endedAt: true,
+                    summary: true,
+                    questions: {
+                      where: { isUsed: true },
+                      take: 3,
+                      select: { text: true }
+                    }
+                  }
+                }
+              }
+            });
+
+            await prisma.$disconnect();
+
+            if (relationship) {
+              // 현재 미팅 번호 계산
+              const totalMeetings = await meetingService.getMeetingCountForRelationship(relationshipId);
+
+              interface MeetingWithQuestions {
+                id: string;
+                title: string | null;
+                endedAt: Date | null;
+                summary: string | null;
+                questions: { text: string }[];
+              }
+
+              const relationshipContext = {
+                name: relationship.name,
+                type: relationship.type,
+                industry: relationship.industry,
+                stage: relationship.stage,
+                notes: relationship.notes,
+                structured_data: relationship.structuredData as object || {},
+                meeting_number: totalMeetings,
+                recent_meetings: relationship.meetings.map((m: MeetingWithQuestions) => ({
+                  date: m.endedAt?.toISOString().split('T')[0],
+                  summary: m.summary || '요약 없음',
+                  keyQuestions: m.questions.map(q => q.text),
+                }))
+              };
+
+              questionResponse = await axios.post(
+                `${AI_SERVICE_URL}/api/questions/generate-with-relationship`,
+                {
+                  transcript: transcript.text,
+                  relationship: relationshipContext
+                },
+                { timeout: 20000 }
+              );
+              console.log('Generated relationship-aware questions');
+            } else {
+              // 관계를 찾을 수 없으면 기본 질문 생성으로 폴백
+              console.log('Relationship not found, falling back to basic generation');
+              questionResponse = await axios.post(
+                `${AI_SERVICE_URL}/api/questions/generate`,
+                { transcript: transcript.text },
+                { timeout: 15000 }
+              );
+            }
+          } catch (error) {
+            console.error('Failed to generate relationship-aware questions, falling back:', error);
+            questionResponse = await axios.post(
+              `${AI_SERVICE_URL}/api/questions/generate`,
+              { transcript: transcript.text },
+              { timeout: 15000 }
+            );
+          }
+        } else {
+          // 관계 없는 회의면 기본 질문 생성
+          console.log('Generating basic questions...');
+          questionResponse = await axios.post(
+            `${AI_SERVICE_URL}/api/questions/generate`,
+            { transcript: transcript.text },
+            { timeout: 15000 }
+          );
+        }
 
         let questions = questionResponse.data.questions;
         console.log(`Generated ${questions.length} questions`);
@@ -260,6 +356,7 @@ io.on('connection', (socket) => {
         try {
           await meetingService.endMeeting(dbMeetingId);
           activeMeetings.delete(meetingId);
+          meetingRelationships.delete(meetingId); // 관계 추적 정리
           lastTranscripts.delete(meetingId); // 전사 추적 정리
           console.log(`Meeting ${dbMeetingId} ended in DB`);
         } catch (error) {

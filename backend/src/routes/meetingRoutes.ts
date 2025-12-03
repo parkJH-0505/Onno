@@ -117,7 +117,16 @@ router.post('/:id/end', async (req: Request, res: Response) => {
       res.status(400).json({ success: false, error: 'Meeting ID is required' });
       return;
     }
-    const meeting = await meetingService.endMeeting(id);
+
+    const { summary, keyQuestions } = req.body as {
+      summary?: string;
+      keyQuestions?: string[];
+    };
+
+    const meeting = await meetingService.endMeeting(id, {
+      summary,
+      keyQuestions,
+    });
 
     if (!meeting) {
       res.status(404).json({

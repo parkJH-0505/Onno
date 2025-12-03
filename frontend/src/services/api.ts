@@ -285,9 +285,10 @@ export const meetingApi = {
     }),
 
   // 회의 종료
-  end: (id: string) =>
+  end: (id: string, options?: { summary?: string; keyQuestions?: string[] }) =>
     fetchApi<Meeting>(`/api/meetings/${id}/end`, {
       method: 'POST',
+      body: JSON.stringify(options || {}),
     }),
 
   // 회의 삭제
