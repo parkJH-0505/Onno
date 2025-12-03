@@ -6,7 +6,9 @@ import axios from 'axios';
 import FormData from 'form-data';
 import dotenv from 'dotenv';
 import meetingRoutes from './routes/meetingRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import * as meetingService from './services/meetingService.js';
+import * as userService from './services/userService.js';
 
 dotenv.config();
 
@@ -29,8 +31,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'onno-backend' });
 });
 
-// Meeting API Routes
+// API Routes
 app.use('/api/meetings', meetingRoutes);
+app.use('/api/users', userRoutes);
 
 // WebSocket 연결 처리
 io.on('connection', (socket) => {
@@ -67,7 +70,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('audio_chunk', async (data) => {
-    const { meetingId, audioData } = data;
+    const { meetingId, audioData, userId } = data;
 
     try {
       // AI Service로 오디오 전송
@@ -151,8 +154,19 @@ io.on('connection', (socket) => {
           { timeout: 15000 }
         );
 
-        const questions = questionResponse.data.questions;
+        let questions = questionResponse.data.questions;
         console.log(`Generated ${questions.length} questions`);
+
+        // 개인화 적용 (userId가 있는 경우)
+        if (userId) {
+          try {
+            const personalizedQuestions = await userService.personalizeQuestions(userId, questions);
+            questions = personalizedQuestions;
+            console.log('Questions personalized for user:', userId);
+          } catch (error) {
+            console.error('Failed to personalize questions:', error);
+          }
+        }
 
         // 질문들을 클라이언트로 전송 및 DB 저장
         for (const question of questions) {

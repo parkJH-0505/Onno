@@ -1,5 +1,6 @@
 // Onno Meeting Storage Schema
 // Phase 2-2: 회의 저장 시스템
+// Phase 2-3: 개인화 Lv.1
 
 generator client {
   provider = "prisma-client-js"
@@ -11,9 +12,93 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 회의 (Meeting)
+// ============ 사용자 (User) ============
+model User {
+  id          String   @id @default(cuid())
+  email       String?  @unique
+  name        String?
+
+  // 개인화 설정
+  preferences UserPreferences?
+
+  // 관계
+  meetings    Meeting[]
+  questionActions QuestionAction[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 사용자 질문 선호도
+model UserPreferences {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 질문 카테고리별 선호도 (0.0 ~ 1.0)
+  businessModelPref  Float @default(0.5)
+  tractionPref       Float @default(0.5)
+  teamPref           Float @default(0.5)
+  marketPref         Float @default(0.5)
+  technologyPref     Float @default(0.5)
+  financialsPref     Float @default(0.5)
+  risksPref          Float @default(0.5)
+
+  // 말투/톤 선호
+  tone               ToneStyle @default(FORMAL)
+  includeExplanation Boolean   @default(false)  // 용어 설명 포함 여부
+
+  // 학습 통계
+  totalQuestionsSeen Int @default(0)
+  totalQuestionsUsed Int @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum ToneStyle {
+  FORMAL      // 격식체
+  CASUAL      // 비격식체
+  DIRECT      // 직접적
+}
+
+// 질문 액션 로그 (학습 데이터)
+model QuestionAction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId  String?
+
+  // 원본 질문 정보
+  originalText String
+  category     QuestionCategory?
+
+  // 사용자 액션
+  action       QuestionActionType
+  modifiedText String?  // 수정해서 사용한 경우
+
+  // 컨텍스트
+  meetingId    String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([category])
+  @@index([action])
+}
+
+enum QuestionActionType {
+  USED           // 그대로 사용
+  USED_MODIFIED  // 수정해서 사용
+  IGNORED        // 무시
+  DISMISSED      // 명시적 거부
+}
+
+// ============ 회의 (Meeting) ============
 model Meeting {
   id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
   title       String?
   startedAt   DateTime @default(now())
   endedAt     DateTime?
@@ -30,6 +115,7 @@ model Meeting {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([userId])
   @@index([status])
   @@index([startedAt])
 }
