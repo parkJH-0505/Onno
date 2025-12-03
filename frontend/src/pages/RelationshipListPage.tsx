@@ -36,7 +36,7 @@ const STATUS_COLORS: Record<RelationshipStatus, string> = {
 interface RelationshipListPageProps {
   onSelectRelationship: (id: string) => void;
   onCreateRelationship: () => void;
-  onStartMeeting: (relationshipId: string) => void;
+  onStartMeeting: (relationshipId: string, relationshipName?: string) => void;
   onGoToHistory: () => void;
 }
 
@@ -243,7 +243,7 @@ export function RelationshipListPage({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onStartMeeting(rel.id);
+                      onStartMeeting(rel.id, rel.name);
                     }}
                   >
                     회의 시작

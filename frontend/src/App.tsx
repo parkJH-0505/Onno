@@ -18,6 +18,7 @@ function App() {
   const [view, setView] = useState<View>('relationships'); // 관계 목록이 메인 화면
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
   const [selectedRelationshipId, setSelectedRelationshipId] = useState<string | null>(null);
+  const [selectedRelationshipName, setSelectedRelationshipName] = useState<string | null>(null);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [showRelationshipModal, setShowRelationshipModal] = useState(false);
   const [editingRelationship, setEditingRelationship] = useState<RelationshipObject | null>(null);
@@ -63,11 +64,30 @@ function App() {
   const handleBackToRelationships = () => {
     setView('relationships');
     setSelectedRelationshipId(null);
+    setSelectedRelationshipName(null);
+  };
+
+  // 회의 종료 후 관계 상세 페이지로 돌아가기
+  const handleMeetingEnd = () => {
+    if (selectedRelationshipId) {
+      // 관계에서 시작한 회의 → 해당 관계 상세 페이지로 돌아가기 (새로고침 트리거)
+      const relationshipId = selectedRelationshipId;
+      setSelectedRelationshipId(null);
+      setSelectedRelationshipName(null);
+      setTimeout(() => {
+        setSelectedRelationshipId(relationshipId);
+        setView('relationship-detail');
+      }, 0);
+    } else {
+      // 일반 회의 → 회의 히스토리로
+      handleBackToHistory();
+    }
   };
 
   // 관계에서 회의 시작
-  const handleStartMeetingWithRelationship = (relationshipId: string) => {
+  const handleStartMeetingWithRelationship = (relationshipId: string, relationshipName?: string) => {
     setSelectedRelationshipId(relationshipId);
+    setSelectedRelationshipName(relationshipName || null);
     setView('meeting');
   };
 
@@ -123,12 +143,15 @@ function App() {
         <MeetingHistory
           onSelectMeeting={handleSelectMeeting}
           onNewMeeting={handleNewMeeting}
+          onGoToRelationships={handleBackToRelationships}
         />
       )}
       {view === 'meeting' && (
         <MeetingRoom
-          onBack={handleBackToHistory}
+          onBack={handleMeetingEnd}
           onGoToAuth={handleGoToAuth}
+          relationshipId={selectedRelationshipId || undefined}
+          relationshipName={selectedRelationshipName || undefined}
         />
       )}
       {view === 'detail' && selectedMeetingId && (
@@ -142,6 +165,7 @@ function App() {
           onSelectRelationship={handleSelectRelationship}
           onCreateRelationship={handleCreateRelationship}
           onStartMeeting={handleStartMeetingWithRelationship}
+          onGoToHistory={() => setView('history')}
         />
       )}
       {view === 'relationship-detail' && selectedRelationshipId && (

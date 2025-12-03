@@ -54,7 +54,7 @@ const STAGE_LABELS: Record<FundingStage, string> = {
 interface RelationshipDetailPageProps {
   relationshipId: string;
   onBack: () => void;
-  onStartMeeting: (relationshipId: string) => void;
+  onStartMeeting: (relationshipId: string, relationshipName?: string) => void;
   onEdit: (relationship: RelationshipObject) => void;
 }
 
@@ -140,7 +140,7 @@ export function RelationshipDetailPage({
           <Button variant="secondary" onClick={() => onEdit(relationship)}>
             편집
           </Button>
-          <Button variant="primary" onClick={() => onStartMeeting(relationship.id)}>
+          <Button variant="primary" onClick={() => onStartMeeting(relationship.id, relationship.name)}>
             회의 시작
           </Button>
         </div>
@@ -254,7 +254,7 @@ export function RelationshipDetailPage({
           ) : (
             <div className="relationship-detail-page__meetings-empty">
               <p>아직 진행된 미팅이 없습니다.</p>
-              <Button variant="primary" onClick={() => onStartMeeting(relationship.id)}>
+              <Button variant="primary" onClick={() => onStartMeeting(relationship.id, relationship.name)}>
                 첫 번째 미팅 시작하기
               </Button>
             </div>

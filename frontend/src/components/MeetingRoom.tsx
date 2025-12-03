@@ -11,9 +11,11 @@ import './MeetingRoom.css';
 interface MeetingRoomProps {
   onBack?: () => void;
   onGoToAuth?: () => void;
+  relationshipId?: string;
+  relationshipName?: string;
 }
 
-export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth }: MeetingRoomProps) {
+export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth, relationshipId, relationshipName }: MeetingRoomProps) {
   const { questions, isRecording, reset } = useMeetingStore();
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [meetingId] = useState(() => 'meeting-' + Date.now());
@@ -22,6 +24,11 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth }: MeetingRoomProp
 
   const WS_URL = import.meta.env.VITE_WS_URL || 'https://onno-backend.onrender.com';
   const USER_ID = 'user-1';
+
+  // 회의 제목 생성: 관계가 있으면 관계 이름 포함
+  const meetingTitle = relationshipName
+    ? `${relationshipName} 미팅`
+    : `Meeting ${meetingId}`;
 
   // Duration timer
   useEffect(() => {
@@ -51,9 +58,15 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth }: MeetingRoomProp
 
     try {
       websocketService.connect(WS_URL);
-      websocketService.joinMeeting(meetingId, USER_ID);
+      websocketService.joinMeeting(meetingId, USER_ID, {
+        title: meetingTitle,
+        relationshipId,
+        meetingType: 'INVESTMENT_1ST',
+      });
       setConnectionStatus('connected');
-      toast.success('회의에 연결되었습니다');
+      toast.success(relationshipName
+        ? `${relationshipName} 회의에 연결되었습니다`
+        : '회의에 연결되었습니다');
     } catch (error) {
       setConnectionStatus('error');
       toast.error('연결에 실패했습니다');
@@ -94,7 +107,11 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth }: MeetingRoomProp
           )}
           <div className="meeting-room-v2__brand">
             <span className="meeting-room-v2__logo">Onno</span>
-            <span className="meeting-room-v2__tagline">조용한 파트너</span>
+            {relationshipName ? (
+              <span className="meeting-room-v2__relationship-name">{relationshipName}</span>
+            ) : (
+              <span className="meeting-room-v2__tagline">조용한 파트너</span>
+            )}
           </div>
         </div>
 

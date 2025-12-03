@@ -3,15 +3,43 @@ import { MeetingStatus, SpeakerRole, QuestionCategory, QuestionFeedback } from '
 
 // ============ Meeting CRUD ============
 
-export async function createMeeting(title?: string) {
+export interface CreateMeetingOptions {
+  title?: string;
+  userId?: string;
+  relationshipObjectId?: string;
+  meetingType?: 'INVESTMENT_1ST' | 'INVESTMENT_2ND' | 'IR' | 'DUE_DILIGENCE' | 'MENTORING' | 'GENERAL';
+}
+
+export async function createMeeting(options?: CreateMeetingOptions | string) {
+  // 하위 호환성: string으로 호출 시 title로 처리
+  const opts: CreateMeetingOptions = typeof options === 'string'
+    ? { title: options }
+    : options || {};
+
+  const { title, userId, relationshipObjectId, meetingType } = opts;
+
+  // 관계 객체와 연결된 경우, 해당 관계의 몇 번째 회의인지 계산
+  let meetingNumber = 1;
+  if (relationshipObjectId) {
+    const count = await prisma.meeting.count({
+      where: { relationshipObjectId }
+    });
+    meetingNumber = count + 1;
+  }
+
   return prisma.meeting.create({
     data: {
       title,
+      userId,
+      relationshipObjectId,
+      meetingType: meetingType || 'GENERAL',
+      meetingNumber,
       status: MeetingStatus.ACTIVE,
     },
     include: {
       transcripts: true,
       questions: true,
+      relationshipObject: true,
     },
   });
 }

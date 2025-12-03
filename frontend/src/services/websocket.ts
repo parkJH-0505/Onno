@@ -39,9 +39,19 @@ class WebSocketService {
     });
   }
 
-  joinMeeting(meetingId: string, userId: string) {
+  joinMeeting(meetingId: string, userId: string, options?: {
+    title?: string;
+    relationshipId?: string;
+    meetingType?: string;
+  }) {
     this.meetingId = meetingId;
-    this.socket?.emit('join_meeting', { meetingId, userId });
+    this.socket?.emit('join_meeting', {
+      meetingId,
+      userId,
+      title: options?.title,
+      relationshipId: options?.relationshipId,
+      meetingType: options?.meetingType,
+    });
   }
 
   sendAudioChunk(audioData: Blob) {

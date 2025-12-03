@@ -69,16 +69,21 @@ io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
   socket.on('join_meeting', async (data) => {
-    const { meetingId, userId, title } = data;
+    const { meetingId, userId, title, relationshipId, meetingType } = data;
     socket.join(`meeting-${meetingId}`);
-    console.log(`User ${userId} joined meeting ${meetingId}`);
+    console.log(`User ${userId} joined meeting ${meetingId}` + (relationshipId ? ` with relationship ${relationshipId}` : ''));
 
     // 데이터베이스에 회의 생성 (아직 없으면)
     if (!activeMeetings.has(meetingId)) {
       try {
-        const dbMeeting = await meetingService.createMeeting(title || `Meeting ${meetingId}`);
+        const dbMeeting = await meetingService.createMeeting({
+          title: title || `Meeting ${meetingId}`,
+          userId,
+          relationshipObjectId: relationshipId,
+          meetingType: meetingType || 'GENERAL',
+        });
         activeMeetings.set(meetingId, dbMeeting.id);
-        console.log(`Created meeting in DB: ${dbMeeting.id}`);
+        console.log(`Created meeting in DB: ${dbMeeting.id}` + (relationshipId ? ` linked to relationship ${relationshipId}` : ''));
       } catch (error) {
         console.error('Failed to create meeting in DB:', error);
       }
@@ -94,6 +99,7 @@ io.on('connection', (socket) => {
     socket.emit('meeting_joined', {
       meetingId,
       dbMeetingId: activeMeetings.get(meetingId),
+      relationshipId,
       timestamp: new Date().toISOString()
     });
   });
