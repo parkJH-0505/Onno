@@ -37,12 +37,14 @@ interface RelationshipListPageProps {
   onSelectRelationship: (id: string) => void;
   onCreateRelationship: () => void;
   onStartMeeting: (relationshipId: string) => void;
+  onGoToHistory: () => void;
 }
 
 export function RelationshipListPage({
   onSelectRelationship,
   onCreateRelationship,
   onStartMeeting,
+  onGoToHistory,
 }: RelationshipListPageProps) {
   const { user } = useAuthStore();
   const [relationships, setRelationships] = useState<RelationshipObject[]>([]);
@@ -55,6 +57,10 @@ export function RelationshipListPage({
   useEffect(() => {
     if (user?.id) {
       loadRelationships();
+    } else {
+      // 사용자가 없으면 빈 목록 표시
+      setRelationships([]);
+      setLoading(false);
     }
   }, [user?.id, search, filterType, filterStatus]);
 
@@ -95,9 +101,18 @@ export function RelationshipListPage({
             스타트업, 고객사, 파트너와의 관계를 관리하세요
           </p>
         </div>
-        <Button onClick={onCreateRelationship} variant="primary">
-          + 새 관계 추가
-        </Button>
+        <div className="relationship-list-page__header-actions">
+          <Button onClick={onGoToHistory} variant="ghost">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 8v4l3 3" />
+              <circle cx="12" cy="12" r="10" />
+            </svg>
+            회의 히스토리
+          </Button>
+          <Button onClick={onCreateRelationship} variant="primary">
+            + 새 관계 추가
+          </Button>
+        </div>
       </header>
 
       {/* 필터 바 */}
