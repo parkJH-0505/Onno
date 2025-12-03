@@ -60,12 +60,13 @@ class WebSocketService {
     reader.readAsArrayBuffer(audioData);
   }
 
-  leaveMeeting(userId: string) {
+  leaveMeeting(userId: string, endMeeting: boolean = false) {
     if (!this.meetingId) return;
 
     this.socket?.emit('leave_meeting', {
       meetingId: this.meetingId,
-      userId
+      userId,
+      endMeeting
     });
     this.meetingId = null;
   }
