@@ -14,6 +14,16 @@ import {
   getUserProgress,
   getLevelHistory
 } from '../services/personalizationService.js';
+import {
+  getCategoryUsageAnalysis,
+  getRecentUsageTrend,
+  getRecommendedCategories,
+  optimizePreferences
+} from '../services/userService.js';
+import {
+  generateUserInsights,
+  getRelationshipPatterns
+} from '../services/insightService.js';
 import type { DomainType, PersonaType, FeedbackRating, MeetingType } from '@prisma/client';
 
 const router = Router();
@@ -235,6 +245,83 @@ router.get('/users/:userId/personalization-context', async (req, res) => {
   } catch (error) {
     console.error('Get personalization context error:', error);
     res.status(500).json({ success: false, error: '개인화 컨텍스트 조회 실패' });
+  }
+});
+
+// ============ 고급 선호도 분석 (Phase 5-3) ============
+
+// 카테고리별 사용률 분석
+router.get('/users/:userId/analytics/category-usage', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const analysis = await getCategoryUsageAnalysis(userId);
+    res.json({ success: true, data: analysis });
+  } catch (error) {
+    console.error('Get category usage analysis error:', error);
+    res.status(500).json({ success: false, error: '카테고리 분석 실패' });
+  }
+});
+
+// 최근 사용 트렌드
+router.get('/users/:userId/analytics/recent-trend', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { days } = req.query;
+    const trend = await getRecentUsageTrend(userId, Number(days) || 7);
+    res.json({ success: true, data: trend });
+  } catch (error) {
+    console.error('Get recent trend error:', error);
+    res.status(500).json({ success: false, error: '트렌드 분석 실패' });
+  }
+});
+
+// 추천 카테고리
+router.get('/users/:userId/analytics/recommended-categories', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const recommendations = await getRecommendedCategories(userId);
+    res.json({ success: true, data: recommendations });
+  } catch (error) {
+    console.error('Get recommended categories error:', error);
+    res.status(500).json({ success: false, error: '추천 카테고리 조회 실패' });
+  }
+});
+
+// 선호도 자동 최적화
+router.post('/users/:userId/analytics/optimize-preferences', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const updates = await optimizePreferences(userId);
+    res.json({ success: true, data: { optimized: Object.keys(updates).length > 0, updates } });
+  } catch (error) {
+    console.error('Optimize preferences error:', error);
+    res.status(500).json({ success: false, error: '선호도 최적화 실패' });
+  }
+});
+
+// ============ 패턴 인사이트 (Phase 6-2) ============
+
+// 사용자 패턴 인사이트
+router.get('/users/:userId/insights', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const insights = await generateUserInsights(userId);
+    res.json({ success: true, data: insights });
+  } catch (error) {
+    console.error('Get user insights error:', error);
+    res.status(500).json({ success: false, error: '인사이트 조회 실패' });
+  }
+});
+
+// 관계별 패턴 분석
+router.get('/relationships/:relationshipId/patterns', async (req, res) => {
+  try {
+    const { relationshipId } = req.params;
+    const patterns = await getRelationshipPatterns(relationshipId);
+    res.json({ success: true, data: patterns });
+  } catch (error) {
+    console.error('Get relationship patterns error:', error);
+    res.status(500).json({ success: false, error: '관계 패턴 조회 실패' });
   }
 });
 

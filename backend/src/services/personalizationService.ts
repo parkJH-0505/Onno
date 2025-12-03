@@ -164,6 +164,7 @@ export async function rewardMeetingComplete(
   }
 
   return {
+    domain,  // 도메인 정보 추가
     totalXpEarned: XP_REWARDS.MEETING_COMPLETE + (Math.min(questionsUsed, 5) * XP_REWARDS.QUESTION_USED),
     leveledUp: meetingXp.leveledUp || questionXp.leveledUp,
     newLevel: questionXp.newLevel || meetingXp.newLevel,

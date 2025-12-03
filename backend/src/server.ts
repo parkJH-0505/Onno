@@ -430,11 +430,12 @@ io.on('connection', (socket) => {
               if (reward.leveledUp) {
                 io.to(`meeting-${meetingId}`).emit('level_up', {
                   userId,
+                  domain: reward.domain,
                   newLevel: reward.newLevel,
                   newFeatures: reward.newFeatures,
                   timestamp: new Date().toISOString()
                 });
-                console.log(`User ${userId} leveled up to ${reward.newLevel}!`);
+                console.log(`User ${userId} leveled up to ${reward.newLevel} in ${reward.domain}!`);
               }
             } catch (rewardError) {
               console.error('Failed to reward XP:', rewardError);

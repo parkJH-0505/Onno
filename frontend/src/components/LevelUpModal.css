@@ -1,0 +1,247 @@
+/* =============================================
+   LevelUpModal Styles
+   ============================================= */
+
+.levelup-modal__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.levelup-modal {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: var(--space-4);
+  padding: var(--space-8);
+  background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: var(--radius-2xl);
+  text-align: center;
+  overflow: hidden;
+  transform: scale(0.9);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.levelup-modal--visible {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* 파티클 효과 */
+.levelup-modal__particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.levelup-modal__particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(135deg, #ffd700 0%, #ff6b6b 100%);
+  border-radius: 50%;
+  animation: float 3s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.2s);
+}
+
+.levelup-modal__particle:nth-child(odd) {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+.levelup-modal__particle:nth-child(1) { top: 10%; left: 10%; }
+.levelup-modal__particle:nth-child(2) { top: 20%; left: 80%; }
+.levelup-modal__particle:nth-child(3) { top: 40%; left: 5%; }
+.levelup-modal__particle:nth-child(4) { top: 60%; left: 90%; }
+.levelup-modal__particle:nth-child(5) { top: 80%; left: 15%; }
+.levelup-modal__particle:nth-child(6) { top: 90%; left: 75%; }
+.levelup-modal__particle:nth-child(7) { top: 15%; left: 50%; }
+.levelup-modal__particle:nth-child(8) { top: 50%; left: 95%; }
+.levelup-modal__particle:nth-child(9) { top: 70%; left: 25%; }
+.levelup-modal__particle:nth-child(10) { top: 25%; left: 30%; }
+.levelup-modal__particle:nth-child(11) { top: 55%; left: 70%; }
+.levelup-modal__particle:nth-child(12) { top: 85%; left: 45%; }
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* 아이콘 */
+.levelup-modal__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--space-5);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 50%;
+  color: white;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.8);
+  }
+}
+
+/* 타이틀 */
+.levelup-modal__title {
+  font-size: 28px;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 var(--space-4);
+  text-shadow: 0 2px 20px rgba(99, 102, 241, 0.5);
+}
+
+/* 도메인 & 레벨 */
+.levelup-modal__level {
+  margin-bottom: var(--space-5);
+}
+
+.levelup-modal__domain {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: var(--space-3);
+}
+
+.levelup-modal__level-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.levelup-modal__level-text {
+  font-size: 48px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffd700 0%, #ff6b6b 50%, #6366f1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+}
+
+.levelup-modal__level-desc {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+/* 별 */
+.levelup-modal__stars {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.levelup-modal__star {
+  animation: starPop 0.5s ease-out backwards;
+  animation-delay: var(--delay);
+}
+
+.levelup-modal__star.star--filled {
+  color: #ffd700;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.6));
+}
+
+.levelup-modal__star.star--empty {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes starPop {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3) rotate(0deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* 새 기능 */
+.levelup-modal__features {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.levelup-modal__features-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #10b981;
+  margin: 0 0 var(--space-3);
+}
+
+.levelup-modal__features-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.levelup-modal__feature {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  padding: var(--space-2) 0;
+}
+
+.levelup-modal__feature svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+/* 버튼 */
+.levelup-modal__btn {
+  width: 100%;
+  padding: var(--space-4) !important;
+  font-size: 16px !important;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+}
+
+.levelup-modal__btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+}

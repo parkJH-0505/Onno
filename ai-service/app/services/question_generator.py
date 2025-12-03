@@ -422,3 +422,241 @@ async def generate_questions_with_relationship(
     logger.info(f"Generated {len(result.get('questions', []))} relationship-aware questions")
 
     return result
+
+
+# 개인화 프롬프트 (Phase 6-1)
+PERSONALIZED_PROMPT = """당신은 경험이 풍부한 VC(Venture Capital) 투자 심사 전문가입니다.
+
+## 대화 전사:
+{transcript}
+
+## 사용자 프로필:
+- **레벨**: Lv.{level} ({level_description})
+- **페르소나**: {persona_description}
+- **도메인**: {domain}
+
+## 사용자 선호도:
+{preferences_info}
+
+## 해금된 기능:
+{features_info}
+
+## 질문 생성 가이드라인:
+
+### 페르소나별 톤:
+{persona_guidelines}
+
+### 레벨별 질문 복잡도:
+{level_guidelines}
+
+### 선호도 반영:
+- 선호도가 높은 카테고리({high_pref_categories})에서 더 많은 질문 생성
+- 선호도가 낮은 카테고리({low_pref_categories})는 최소화
+
+## 출력 형식:
+반드시 아래 JSON 형식으로만 응답하세요.
+
+{{
+  "questions": [
+    {{
+      "text": "구체적인 질문 텍스트 (한국어)",
+      "priority": "critical 또는 important 또는 follow_up",
+      "reason": "이 질문이 왜 중요한지 (1문장)",
+      "category": "business_model 또는 traction 또는 team 또는 market 또는 technology 또는 financials 또는 risks",
+      "explanation": "{explanation_instruction}"
+    }}
+  ]
+}}
+
+**3개의 질문을 생성하세요.**"""
+
+
+def _get_persona_description(persona: str) -> str:
+    """페르소나 설명"""
+    descriptions = {
+        "ANALYST": "분석가 - 데이터와 지표 중심의 객관적 접근",
+        "BUDDY": "동료 - 친근하고 협력적인 스타일",
+        "GUARDIAN": "보호자 - 리스크와 안전에 집중",
+        "VISIONARY": "비전가 - 큰 그림과 가능성에 집중"
+    }
+    return descriptions.get(persona, "분석가")
+
+
+def _get_persona_guidelines(persona: str) -> str:
+    """페르소나별 질문 가이드라인"""
+    guidelines = {
+        "ANALYST": """- 데이터와 지표 기반의 질문을 우선
+- 객관적이고 측정 가능한 정보 요청
+- 비교 분석과 벤치마크 관련 질문 포함""",
+        "BUDDY": """- 협력적이고 건설적인 톤의 질문
+- 어떻게 도와줄 수 있는지 관점의 질문
+- 팀과 문화에 대한 이해를 높이는 질문""",
+        "GUARDIAN": """- 리스크와 잠재적 문제에 집중
+- 대응 계획과 보호 장치 확인
+- 최악의 시나리오와 대비책 질문""",
+        "VISIONARY": """- 큰 비전과 장기적 가능성에 집중
+- 혁신적 기회와 성장 잠재력 질문
+- 업계 변화와 트렌드에 대한 시각 확인"""
+    }
+    return guidelines.get(persona, guidelines["ANALYST"])
+
+
+def _get_level_description(level: int) -> str:
+    """레벨 설명"""
+    descriptions = {
+        1: "입문자",
+        2: "견습생",
+        3: "숙련자",
+        4: "전문가",
+        5: "마스터"
+    }
+    return descriptions.get(level, "입문자")
+
+
+def _get_level_guidelines(level: int) -> str:
+    """레벨별 질문 복잡도 가이드라인"""
+    if level <= 1:
+        return """- 기본적이고 이해하기 쉬운 질문
+- 핵심 지표와 기본 정보 위주
+- 전문 용어 최소화"""
+    elif level <= 2:
+        return """- 조금 더 상세한 질문 가능
+- 기본 지표 외 추가 분석 질문
+- 일부 전문 용어 사용"""
+    elif level <= 3:
+        return """- 심화된 분석 질문 포함
+- 벤치마크와 비교 분석 질문
+- 업계 전문 용어 활용"""
+    elif level <= 4:
+        return """- 고급 전략적 질문 포함
+- 예측과 시나리오 분석 질문
+- 전문가 수준의 통찰 요청"""
+    else:
+        return """- 최고 수준의 복합적 질문
+- 다차원적 분석과 예측 질문
+- 업계 최고 수준의 통찰 요청"""
+
+
+def _format_preferences_for_prompt(preferences: dict) -> tuple:
+    """선호도를 프롬프트용으로 포맷"""
+    category_map = {
+        "businessModelPref": ("business_model", "비즈니스 모델"),
+        "tractionPref": ("traction", "트랙션"),
+        "teamPref": ("team", "팀"),
+        "marketPref": ("market", "시장"),
+        "technologyPref": ("technology", "기술"),
+        "financialsPref": ("financials", "재무"),
+        "risksPref": ("risks", "리스크")
+    }
+
+    pref_items = []
+    high_prefs = []
+    low_prefs = []
+
+    for key, (cat, label) in category_map.items():
+        value = preferences.get(key, 0.5)
+        pref_items.append(f"- {label}: {value:.0%}")
+
+        if value >= 0.7:
+            high_prefs.append(label)
+        elif value <= 0.3:
+            low_prefs.append(label)
+
+    pref_info = "\n".join(pref_items)
+    high_cats = ", ".join(high_prefs) if high_prefs else "없음"
+    low_cats = ", ".join(low_prefs) if low_prefs else "없음"
+
+    return pref_info, high_cats, low_cats
+
+
+async def generate_personalized_questions(
+    transcript: str,
+    personalization: Optional[dict] = None
+) -> dict:
+    """
+    개인화된 질문 생성 (Phase 6-1)
+
+    Args:
+        transcript: 대화 전사 텍스트
+        personalization: 개인화 컨텍스트 {
+            level, persona, domain, features, preferences
+        }
+
+    Returns:
+        dict: 생성된 질문 리스트
+    """
+    # 개인화 정보가 없으면 기본 질문 생성으로 폴백
+    if not personalization:
+        logger.info("No personalization context provided, falling back to basic generation")
+        return await generate_questions(transcript)
+
+    # 개인화 정보 추출
+    level = personalization.get("level", 1)
+    persona = personalization.get("persona", "ANALYST")
+    domain = personalization.get("domain", "GENERAL")
+    features = personalization.get("features", [])
+    preferences = personalization.get("preferences", {})
+
+    # 프롬프트 구성 요소 생성
+    level_desc = _get_level_description(level)
+    persona_desc = _get_persona_description(persona)
+    persona_guidelines = _get_persona_guidelines(persona)
+    level_guidelines = _get_level_guidelines(level)
+
+    pref_info, high_cats, low_cats = _format_preferences_for_prompt(preferences)
+
+    features_info = "- " + "\n- ".join(features) if features else "기본 기능만 해금됨"
+
+    # 설명 포함 여부
+    include_explanation = preferences.get("includeExplanation", True)
+    explanation_instruction = "이 질문에 대한 간단한 설명 (선택사항)" if include_explanation else "(생략)"
+
+    # 도메인 한글화
+    domain_labels = {
+        "INVESTMENT_SCREENING": "투자 심사",
+        "MENTORING": "멘토링",
+        "SALES": "세일즈",
+        "PRODUCT_REVIEW": "제품 리뷰",
+        "TEAM_MEETING": "팀 미팅",
+        "USER_INTERVIEW": "사용자 인터뷰",
+        "GENERAL": "일반"
+    }
+    domain_label = domain_labels.get(domain, "일반")
+
+    # 최종 프롬프트 생성
+    prompt = PERSONALIZED_PROMPT.format(
+        transcript=transcript,
+        level=level,
+        level_description=level_desc,
+        persona_description=persona_desc,
+        domain=domain_label,
+        preferences_info=pref_info,
+        features_info=features_info,
+        persona_guidelines=persona_guidelines,
+        level_guidelines=level_guidelines,
+        high_pref_categories=high_cats,
+        low_pref_categories=low_cats,
+        explanation_instruction=explanation_instruction
+    )
+
+    logger.info(f"Generating personalized questions for Lv.{level} {persona} in {domain}")
+
+    client = get_client()
+
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
+
+    response_text = message.content[0].text
+    result = extract_json_from_response(response_text)
+
+    logger.info(f"Generated {len(result.get('questions', []))} personalized questions")
+
+    return result

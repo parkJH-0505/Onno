@@ -282,3 +282,158 @@ export async function getUserStats(userId: string) {
       .slice(0, 3),
   };
 }
+
+// ============ 고급 선호도 분석 ============
+
+// 카테고리별 사용률 분석
+export async function getCategoryUsageAnalysis(userId: string) {
+  // 모든 액션 조회
+  const actions = await prisma.questionAction.findMany({
+    where: { userId },
+    select: {
+      category: true,
+      action: true,
+      createdAt: true,
+    },
+  });
+
+  // 카테고리별 통계
+  const categoryStats: Record<string, { seen: number; used: number; rate: number }> = {};
+
+  for (const action of actions) {
+    const cat = action.category || 'GENERAL';
+    if (!categoryStats[cat]) {
+      categoryStats[cat] = { seen: 0, used: 0, rate: 0 };
+    }
+    categoryStats[cat].seen++;
+    if (action.action === 'USED' || action.action === 'USED_MODIFIED') {
+      categoryStats[cat].used++;
+    }
+  }
+
+  // 사용률 계산
+  for (const cat of Object.keys(categoryStats)) {
+    const stats = categoryStats[cat];
+    if (stats) {
+      stats.rate = stats.seen > 0 ? (stats.used / stats.seen) * 100 : 0;
+    }
+  }
+
+  return categoryStats;
+}
+
+// 최근 N일 트렌드 분석
+export async function getRecentUsageTrend(userId: string, days: number = 7) {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  const actions = await prisma.questionAction.findMany({
+    where: {
+      userId,
+      createdAt: { gte: startDate },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  // 일별 집계
+  const dailyStats: Record<string, { seen: number; used: number }> = {};
+
+  for (const action of actions) {
+    const dateKey = action.createdAt.toISOString().split('T')[0] as string;
+    if (!dailyStats[dateKey]) {
+      dailyStats[dateKey] = { seen: 0, used: 0 };
+    }
+    const stats = dailyStats[dateKey];
+    if (stats) {
+      stats.seen++;
+      if (action.action === 'USED' || action.action === 'USED_MODIFIED') {
+        stats.used++;
+      }
+    }
+  }
+
+  return dailyStats;
+}
+
+// 선호도 기반 카테고리 추천
+export async function getRecommendedCategories(userId: string) {
+  const prefs = await getUserPreferences(userId);
+  const categoryAnalysis = await getCategoryUsageAnalysis(userId);
+
+  const recommendations: Array<{ category: string; score: number; reason: string }> = [];
+
+  // 선호도와 사용률을 결합하여 추천
+  const categoryPrefMap: Record<string, number> = {
+    'BUSINESS_MODEL': prefs.businessModelPref,
+    'TRACTION': prefs.tractionPref,
+    'TEAM': prefs.teamPref,
+    'MARKET': prefs.marketPref,
+    'TECHNOLOGY': prefs.technologyPref,
+    'FINANCIALS': prefs.financialsPref,
+    'RISKS': prefs.risksPref,
+  };
+
+  for (const [category, pref] of Object.entries(categoryPrefMap)) {
+    const usage = categoryAnalysis[category] || { seen: 0, used: 0, rate: 0 };
+    const combinedScore = (pref * 0.6) + ((usage.rate / 100) * 0.4);
+
+    let reason = '';
+    if (pref > 0.7) reason = '자주 사용하는 카테고리';
+    else if (pref < 0.3) reason = '관심이 적은 카테고리';
+    else if (usage.rate > 70) reason = '높은 활용률';
+    else reason = '균형잡힌 활용';
+
+    recommendations.push({
+      category,
+      score: combinedScore,
+      reason,
+    });
+  }
+
+  return recommendations.sort((a, b) => b.score - a.score);
+}
+
+// 선호도 자동 최적화 (사용 패턴 기반)
+export async function optimizePreferences(userId: string) {
+  const categoryAnalysis = await getCategoryUsageAnalysis(userId);
+  const prefs = await getUserPreferences(userId);
+
+  // 실제 사용률과 선호도 차이를 기반으로 조정
+  const updates: Record<string, number> = {};
+  const categoryFieldMap: Record<string, string> = {
+    'BUSINESS_MODEL': 'businessModelPref',
+    'TRACTION': 'tractionPref',
+    'TEAM': 'teamPref',
+    'MARKET': 'marketPref',
+    'TECHNOLOGY': 'technologyPref',
+    'FINANCIALS': 'financialsPref',
+    'RISKS': 'risksPref',
+  };
+
+  for (const [category, field] of Object.entries(categoryFieldMap)) {
+    const usage = categoryAnalysis[category];
+    if (!usage || usage.seen < 3) continue; // 최소 3개 이상 본 경우만
+
+    const actualRate = usage.rate / 100;
+    const prefValue = (prefs as unknown as Record<string, unknown>)[field];
+    const currentPref = typeof prefValue === 'number' ? prefValue : 0.5;
+
+    // 실제 사용률 방향으로 조금씩 이동 (학습률 0.1)
+    const diff = actualRate - currentPref;
+    const newPref = Math.max(0, Math.min(1, currentPref + (diff * 0.1)));
+
+    if (Math.abs(newPref - currentPref) > 0.01) {
+      updates[field] = newPref;
+    }
+  }
+
+  // 업데이트가 있으면 적용
+  if (Object.keys(updates).length > 0) {
+    await prisma.userPreferences.update({
+      where: { userId },
+      data: updates,
+    });
+  }
+
+  return updates;
+}

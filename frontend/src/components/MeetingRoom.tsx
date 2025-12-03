@@ -3,11 +3,13 @@ import { AudioRecorder } from './AudioRecorder';
 import { TranscriptPanel } from './TranscriptPanel';
 import { ContextPanel } from './ContextPanel';
 import { MeetingEndModal } from './MeetingEndModal';
+import { LevelUpModal } from './LevelUpModal';
 import { QuestionCard } from './design-system/QuestionCard';
 import { Button, GlassCard, InlineRecordButton } from './design-system';
 import { useMeetingStore } from '../stores/meetingStore';
 import { toast } from '../stores/toastStore';
 import { meetingApi, relationshipApi } from '../services/api';
+import type { DomainType } from '../services/api';
 import websocketService from '../services/websocket';
 import './MeetingRoom.css';
 
@@ -27,6 +29,13 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth, relationshipId, r
   const [startTime, setStartTime] = useState<number | null>(null);
   const [contextCollapsed, setContextCollapsed] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
+
+  // 레벨업 모달 상태
+  const [levelUpData, setLevelUpData] = useState<{
+    domain: DomainType;
+    newLevel: number;
+    newFeatures?: string[];
+  } | null>(null);
 
   const WS_URL = import.meta.env.VITE_WS_URL || 'https://onno-backend.onrender.com';
   const USER_ID = 'user-1';
@@ -70,13 +79,30 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth, relationshipId, r
         meetingType: 'INVESTMENT_1ST',
       });
 
-      // meeting_joined 이벤트에서 dbMeetingId 받기
+      // WebSocket 이벤트 리스너 설정
       const socket = websocketService.getSocket();
       if (socket) {
+        // meeting_joined 이벤트에서 dbMeetingId 받기
         socket.on('meeting_joined', (data: { dbMeetingId?: string }) => {
           if (data.dbMeetingId) {
             setDbMeetingId(data.dbMeetingId);
           }
+        });
+
+        // level_up 이벤트 리스너 (회의 종료 후 레벨업 시)
+        socket.on('level_up', (data: {
+          userId: string;
+          newLevel: number;
+          domain?: DomainType;
+          newFeatures?: string[];
+        }) => {
+          console.log('Level up received:', data);
+          setLevelUpData({
+            domain: data.domain || 'GENERAL',
+            newLevel: data.newLevel,
+            newFeatures: data.newFeatures,
+          });
+          toast.success(`레벨 업! Lv.${data.newLevel}`);
         });
       }
 
@@ -293,6 +319,17 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth, relationshipId, r
           onSave={handleEndMeetingSave}
           relationshipId={relationshipId}
           relationshipName={relationshipName}
+        />
+      )}
+
+      {/* Level Up Modal */}
+      {levelUpData && (
+        <LevelUpModal
+          isOpen={true}
+          onClose={() => setLevelUpData(null)}
+          domain={levelUpData.domain}
+          newLevel={levelUpData.newLevel}
+          newFeatures={levelUpData.newFeatures}
         />
       )}
     </div>
