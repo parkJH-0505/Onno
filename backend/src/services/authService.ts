@@ -11,7 +11,7 @@ const JWT_EXPIRES_IN = '7d';
 export interface AuthResult {
   user: {
     id: string;
-    email: string;
+    email: string | null;  // Optional for backward compatibility
     name: string | null;
     role: UserRole;
     avatarUrl: string | null;
