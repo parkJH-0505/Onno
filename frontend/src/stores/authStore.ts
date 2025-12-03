@@ -22,6 +22,7 @@ interface AuthState {
   // Actions
   register: (email: string, password: string, name?: string, role?: User['role']) => Promise<boolean>;
   login: (email: string, password: string) => Promise<boolean>;
+  loginAsGuest: () => Promise<boolean>;  // MVP용 게스트 자동 로그인
   logout: () => void;
   updateProfile: (data: Partial<User>) => Promise<boolean>;
   checkAuth: () => Promise<boolean>;
@@ -97,6 +98,92 @@ export const useAuthStore = create<AuthState>()(
             error: '로그인 중 오류가 발생했습니다.',
           });
           return false;
+        }
+      },
+
+      // MVP용 게스트 자동 로그인 - 기본 사용자로 자동 로그인/생성
+      loginAsGuest: async () => {
+        const { user } = get();
+        // 이미 로그인되어 있으면 스킵
+        if (user) return true;
+
+        set({ isLoading: true, error: null });
+        const guestEmail = 'guest@onno.app';
+        const guestPassword = 'guest123!';
+
+        try {
+          // 먼저 로그인 시도
+          const loginResponse = await fetch(`${API_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: guestEmail, password: guestPassword }),
+          });
+
+          const loginData = await loginResponse.json();
+
+          if (loginData.success) {
+            set({
+              user: loginData.data.user,
+              token: loginData.data.token,
+              isLoading: false,
+              error: null,
+            });
+            return true;
+          }
+
+          // 로그인 실패 시 회원가입 시도
+          const registerResponse = await fetch(`${API_URL}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: guestEmail,
+              password: guestPassword,
+              name: 'Guest User',
+              role: 'INVESTOR',
+            }),
+          });
+
+          const registerData = await registerResponse.json();
+
+          if (registerData.success) {
+            set({
+              user: registerData.data.user,
+              token: registerData.data.token,
+              isLoading: false,
+              error: null,
+            });
+            return true;
+          }
+
+          // 둘 다 실패하면 로컬 게스트 사용자 생성 (오프라인 모드)
+          const localGuestUser: User = {
+            id: 'local-guest-' + Date.now(),
+            email: guestEmail,
+            name: 'Guest User',
+            role: 'INVESTOR',
+          };
+          set({
+            user: localGuestUser,
+            token: 'local-token',
+            isLoading: false,
+            error: null,
+          });
+          return true;
+        } catch {
+          // 네트워크 오류 시 로컬 게스트 사용자 생성
+          const localGuestUser: User = {
+            id: 'local-guest-' + Date.now(),
+            email: guestEmail,
+            name: 'Guest User',
+            role: 'INVESTOR',
+          };
+          set({
+            user: localGuestUser,
+            token: 'local-token',
+            isLoading: false,
+            error: null,
+          });
+          return true;
         }
       },
 

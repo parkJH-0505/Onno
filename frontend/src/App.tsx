@@ -14,7 +14,7 @@ import './App.css';
 type View = 'auth' | 'history' | 'meeting' | 'detail' | 'relationships' | 'relationship-detail';
 
 function App() {
-  const { token, checkAuth } = useAuthStore();
+  const { token, checkAuth, loginAsGuest, user } = useAuthStore();
   const [view, setView] = useState<View>('relationships'); // 관계 목록이 메인 화면
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
   const [selectedRelationshipId, setSelectedRelationshipId] = useState<string | null>(null);
@@ -23,16 +23,31 @@ function App() {
   const [showRelationshipModal, setShowRelationshipModal] = useState(false);
   const [editingRelationship, setEditingRelationship] = useState<RelationshipObject | null>(null);
 
-  // 앱 시작 시 인증 상태 확인
+  // 앱 시작 시 인증 상태 확인 및 자동 게스트 로그인
   useEffect(() => {
     const init = async () => {
       if (token) {
-        await checkAuth();
+        // 기존 토큰이 있으면 검증
+        const isValid = await checkAuth();
+        if (!isValid) {
+          // 토큰이 유효하지 않으면 게스트 로그인
+          await loginAsGuest();
+        }
+      } else {
+        // 토큰이 없으면 자동 게스트 로그인
+        await loginAsGuest();
       }
       setIsAuthChecked(true);
     };
     init();
   }, []);
+
+  // 디버그: 현재 사용자 정보 로깅
+  useEffect(() => {
+    if (user) {
+      console.log('Current user:', user.id, user.email);
+    }
+  }, [user]);
 
   // 기존 회의 클릭 → 상세보기 (읽기 전용)
   const handleSelectMeeting = (meetingId: string) => {
