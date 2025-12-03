@@ -1,13 +1,23 @@
 import { useMeetingStore } from '../stores/meetingStore';
 import type { TranscriptSegment } from '../types/meeting';
+import './TranscriptPanel.css';
 
-// 화자별 색상
-const SPEAKER_COLORS: Record<string, string> = {
-  '화자1': '#4CAF50',
-  '화자2': '#2196F3',
-  '화자3': '#FF9800',
-  '화자4': '#9C27B0',
-  '화자5': '#00BCD4',
+// 화자 색상
+const SPEAKER_COLORS = [
+  'var(--color-success)',
+  'var(--color-primary)',
+  'var(--color-insight)',
+  '#9C27B0',
+  '#00BCD4',
+];
+
+// 화자별 색상 맵 생성
+const getSpeakerColorMap = (speakers: string[]): Record<string, string> => {
+  const colorMap: Record<string, string> = {};
+  speakers.forEach((speaker, idx) => {
+    colorMap[speaker] = SPEAKER_COLORS[idx % SPEAKER_COLORS.length];
+  });
+  return colorMap;
 };
 
 // 화자 역할 라벨
@@ -23,28 +33,27 @@ function formatTime(seconds: number): string {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-function getSpeakerColor(speaker: string): string {
-  return SPEAKER_COLORS[speaker] || '#666666';
-}
-
 interface SegmentItemProps {
   segment: TranscriptSegment;
+  speakerColor: string;
 }
 
-function SegmentItem({ segment }: SegmentItemProps) {
-  const color = getSpeakerColor(segment.speaker);
+function SegmentItem({ segment, speakerColor }: SegmentItemProps) {
   const roleLabel = segment.speakerRole ? ROLE_LABELS[segment.speakerRole] : '';
 
   return (
-    <div className="segment-item" style={{ borderLeftColor: color }}>
-      <div className="segment-header">
-        <span className="segment-speaker" style={{ color }}>
+    <div
+      className="transcript-segment"
+      style={{ '--speaker-color': speakerColor } as React.CSSProperties}
+    >
+      <div className="transcript-segment__header">
+        <span className="transcript-segment__speaker">
           {segment.speaker}
-          {roleLabel && <span className="segment-role">({roleLabel})</span>}
+          {roleLabel && <span className="transcript-segment__role">({roleLabel})</span>}
         </span>
-        <span className="segment-time">{formatTime(segment.startTime)}</span>
+        <span className="transcript-segment__time">{formatTime(segment.startTime)}</span>
       </div>
-      <p className="segment-text">{segment.text}</p>
+      <p className="transcript-segment__text">{segment.text}</p>
     </div>
   );
 }
@@ -52,29 +61,46 @@ function SegmentItem({ segment }: SegmentItemProps) {
 export function TranscriptPanel() {
   const { transcripts } = useMeetingStore();
 
-  // 모든 segments를 하나의 리스트로 병합하거나, segments가 없으면 기존 방식 사용
+  // 모든 화자 수집
+  const allSpeakers = [...new Set(
+    transcripts.flatMap(t =>
+      t.segments?.map(s => s.speaker) || []
+    ).filter(Boolean) as string[]
+  )];
+  const speakerColorMap = getSpeakerColorMap(allSpeakers);
+
+  // segments가 있는지 확인
   const hasSegments = transcripts.some(t => t.segments && t.segments.length > 0);
 
   return (
-    <div className="transcript-panel">
-      <h3>대화 내용</h3>
-      <div className="transcript-list">
-        {transcripts.length === 0 && (
-          <p className="empty-state">대화가 전사되면 여기에 표시됩니다.</p>
-        )}
-
-        {hasSegments ? (
-          // 화자 분리가 있는 경우: segments 표시
-          transcripts.map((t) => (
+    <div className="transcript-panel-v2">
+      {transcripts.length === 0 ? (
+        <div className="transcript-panel-v2__empty">
+          <div className="transcript-panel-v2__empty-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          </div>
+          <p className="transcript-panel-v2__empty-text">
+            대화가 전사되면 여기에 표시됩니다
+          </p>
+        </div>
+      ) : hasSegments ? (
+        <div className="transcript-list">
+          {transcripts.map((t) => (
             <div key={t.id} className="transcript-block">
               {t.segments && t.segments.length > 0 ? (
                 t.segments.map((segment, idx) => (
-                  <SegmentItem key={`${t.id}-${idx}`} segment={segment} />
+                  <SegmentItem
+                    key={`${t.id}-${idx}`}
+                    segment={segment}
+                    speakerColor={speakerColorMap[segment.speaker] || 'var(--color-primary)'}
+                  />
                 ))
               ) : (
-                <div className="transcript-item">
-                  <p className="transcript-text">{t.text}</p>
-                  <span className="transcript-time">
+                <div className="transcript-simple">
+                  <p className="transcript-simple__text">{t.text}</p>
+                  <span className="transcript-simple__time">
                     {new Date(t.timestamp).toLocaleTimeString()}
                   </span>
                 </div>
@@ -83,29 +109,30 @@ export function TranscriptPanel() {
                 <span className="transcript-provider">via {t.provider}</span>
               )}
             </div>
-          ))
-        ) : (
-          // 화자 분리가 없는 경우: 기존 방식
-          transcripts.map((t) => (
-            <div key={t.id} className="transcript-item">
-              <p className="transcript-text">{t.text}</p>
-              <div className="transcript-meta">
-                <span className="transcript-time">
+          ))}
+        </div>
+      ) : (
+        <div className="transcript-list">
+          {transcripts.map((t) => (
+            <div key={t.id} className="transcript-simple">
+              <p className="transcript-simple__text">{t.text}</p>
+              <div className="transcript-simple__meta">
+                <span className="transcript-simple__time">
                   {new Date(t.timestamp).toLocaleTimeString()}
                 </span>
                 {t.latency && (
-                  <span className="transcript-latency">
+                  <span className="transcript-simple__latency">
                     {t.latency.toFixed(1)}s
                   </span>
                 )}
                 {t.provider && (
-                  <span className="transcript-provider">{t.provider}</span>
+                  <span className="transcript-simple__provider">{t.provider}</span>
                 )}
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

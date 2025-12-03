@@ -1,0 +1,63 @@
+/* ============================================
+   LOADING SPINNER V2 - Design System Applied
+   ============================================ */
+
+.loading-spinner-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8);
+  min-height: 200px;
+}
+
+.loading-spinner-v2__ring {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner-v2__ring--sm {
+  width: 24px;
+  height: 24px;
+}
+
+.loading-spinner-v2__ring--md {
+  width: 40px;
+  height: 40px;
+}
+
+.loading-spinner-v2__ring--lg {
+  width: 56px;
+  height: 56px;
+}
+
+.loading-spinner-v2__circle {
+  width: 100%;
+  height: 100%;
+  border: 3px solid var(--color-bg-overlay);
+  border-top-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  animation: spinnerRotate 0.8s linear infinite;
+}
+
+.loading-spinner-v2__ring--sm .loading-spinner-v2__circle {
+  border-width: 2px;
+}
+
+.loading-spinner-v2__ring--lg .loading-spinner-v2__circle {
+  border-width: 4px;
+}
+
+@keyframes spinnerRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spinner-v2__text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}

@@ -1,3 +1,6 @@
+import { Button } from '../design-system';
+import './EmptyState.css';
+
 interface EmptyStateProps {
   icon?: string;
   title: string;
@@ -10,14 +13,14 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon = '📭', title, description, action }: EmptyStateProps) {
   return (
-    <div className="empty-state-large">
-      <div className="empty-state-icon">{icon}</div>
-      <h3 className="empty-state-title">{title}</h3>
-      {description && <p className="empty-state-description">{description}</p>}
+    <div className="empty-state-v2">
+      <div className="empty-state-v2__icon">{icon}</div>
+      <h3 className="empty-state-v2__title">{title}</h3>
+      {description && <p className="empty-state-v2__description">{description}</p>}
       {action && (
-        <button className="btn-new-meeting" onClick={action.onClick}>
+        <Button variant="primary" onClick={action.onClick}>
           {action.label}
-        </button>
+        </Button>
       )}
     </div>
   );

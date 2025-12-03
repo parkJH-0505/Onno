@@ -1,0 +1,23 @@
+/* ============================================
+   AUDIO RECORDER V2 - Design System Applied
+   ============================================ */
+
+.audio-recorder-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.audio-recorder-v2__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  animation: fadeIn var(--transition-normal) ease-out;
+}

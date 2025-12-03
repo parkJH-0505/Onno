@@ -1,0 +1,214 @@
+/* ============================================
+   MEETING HISTORY PAGE - Design System Applied
+   ============================================ */
+
+.history-page {
+  min-height: 100vh;
+  background: var(--color-bg-abyss);
+  padding: var(--space-6);
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.history-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.history-header__left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.history-header__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.history-header__logo {
+  color: var(--color-primary);
+}
+
+.history-header__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ============================================
+   GRID
+   ============================================ */
+.history-content {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-5);
+}
+
+/* ============================================
+   CARD
+   ============================================ */
+.history-card {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: all var(--transition-normal);
+}
+
+.history-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.history-card__header {
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.history-card__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.history-card__title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.4;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.history-card__status--active {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-success);
+}
+
+.history-card__status--ended {
+  background: var(--color-bg-overlay);
+  color: var(--color-text-muted);
+}
+
+.history-card__status-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-success);
+  border-radius: var(--radius-full);
+  animation: pulse 2s infinite;
+}
+
+.history-card__date {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.history-card__time {
+  color: var(--color-text-muted);
+  margin-left: var(--space-1);
+}
+
+/* Body */
+.history-card__body {
+  padding: var(--space-4) var(--space-5);
+  flex: 1;
+}
+
+.history-card__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.history-card__stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.history-card__stat svg {
+  flex-shrink: 0;
+}
+
+.history-card__stat-value {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.history-card__stat-label {
+  font-size: var(--font-size-sm);
+}
+
+/* Footer */
+.history-card__footer {
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.history-card__view-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-primary);
+  transition: all var(--transition-fast);
+}
+
+.history-card:hover .history-card__view-link {
+  gap: var(--space-2);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+  .history-page {
+    padding: var(--space-4);
+  }
+
+  .history-header {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .history-grid {
+    grid-template-columns: 1fr;
+  }
+}

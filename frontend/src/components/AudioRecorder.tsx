@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useMeetingStore } from '../stores/meetingStore';
+import { RecordButton } from './design-system';
+import './AudioRecorder.css';
 
 interface AudioRecorderProps {
   onAudioChunk: (blob: Blob) => void;
@@ -19,11 +21,10 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
   // 누적된 오디오를 전송하는 함수
   const sendAccumulatedAudio = useCallback(() => {
     if (chunksRef.current.length > lastSentIndexRef.current) {
-      // 모든 chunk를 합쳐서 하나의 blob으로 만듦
       const allChunks = chunksRef.current.slice(0, chunksRef.current.length);
       const audioBlob = new Blob(allChunks, { type: 'audio/webm' });
 
-      if (audioBlob.size > 1000) { // 최소 1KB 이상만 전송
+      if (audioBlob.size > 1000) {
         console.log(`Sending accumulated audio: ${audioBlob.size} bytes (${allChunks.length} chunks)`);
         onAudioChunk(audioBlob);
         lastSentIndexRef.current = chunksRef.current.length;
@@ -53,11 +54,9 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
         setError('녹음 중 오류가 발생했습니다.');
       };
 
-      // 1초마다 데이터 수집 (작은 chunk로)
       mediaRecorder.start(1000);
       mediaRecorderRef.current = mediaRecorder;
 
-      // 5초마다 누적된 오디오 전송
       intervalRef.current = window.setInterval(() => {
         sendAccumulatedAudio();
       }, 5000);
@@ -82,7 +81,6 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
       mediaRecorderRef.current.stop();
     }
 
-    // 마지막 남은 오디오 전송
     sendAccumulatedAudio();
 
     if (streamRef.current) {
@@ -97,7 +95,6 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
 
   useEffect(() => {
     return () => {
-      // Cleanup on unmount
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -110,25 +107,31 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
     };
   }, []);
 
-  return (
-    <div className="audio-recorder">
-      <button
-        onClick={isRecording ? stopRecording : startRecording}
-        className={`record-button ${isRecording ? 'recording' : ''}`}
-      >
-        {isRecording ? '⏹️ 정지' : '🎤 녹음 시작'}
-      </button>
+  const handleToggleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
 
-      {isRecording && (
-        <div className="recording-indicator">
-          <span className="pulse"></span>
-          녹음 중...
-        </div>
-      )}
+  return (
+    <div className="audio-recorder-v2">
+      <RecordButton
+        isRecording={isRecording}
+        onClick={handleToggleRecording}
+        size="lg"
+        showLabel={true}
+      />
 
       {error && (
-        <div className="error-message">
-          ⚠️ {error}
+        <div className="audio-recorder-v2__error">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          {error}
         </div>
       )}
     </div>
