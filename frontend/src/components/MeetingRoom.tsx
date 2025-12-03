@@ -10,9 +10,10 @@ import './MeetingRoom.css';
 
 interface MeetingRoomProps {
   onBack?: () => void;
+  onGoToAuth?: () => void;
 }
 
-export function MeetingRoom({ onBack }: MeetingRoomProps) {
+export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth }: MeetingRoomProps) {
   const { questions, isRecording, reset } = useMeetingStore();
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [meetingId] = useState(() => 'meeting-' + Date.now());

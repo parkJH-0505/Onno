@@ -15,8 +15,19 @@ datasource db {
 // ============ 사용자 (User) ============
 model User {
   id          String   @id @default(cuid())
-  email       String?  @unique
+  email       String   @unique
   name        String?
+
+  // 인증 정보
+  passwordHash String?  // 이메일 가입 시
+  provider     AuthProvider @default(EMAIL)
+  providerId   String?  // OAuth provider의 user ID
+
+  // 프로필
+  avatarUrl   String?
+  role        UserRole @default(INVESTOR)  // VC/AC 타겟
+  company     String?
+  jobTitle    String?
 
   // 개인화 설정
   preferences UserPreferences?
@@ -27,6 +38,19 @@ model User {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  KAKAO
+}
+
+enum UserRole {
+  INVESTOR      // VC 심사역
+  ACCELERATOR   // AC 매니저
+  FOUNDER       // 창업자
+  OTHER
 }
 
 // 사용자 질문 선호도

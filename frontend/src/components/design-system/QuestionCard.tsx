@@ -1,5 +1,7 @@
 import React from 'react';
 import { useMeetingStore } from '../../stores/meetingStore';
+import { useAuthStore } from '../../stores/authStore';
+import { userApi } from '../../services/api';
 import type { Question } from '../../types/meeting';
 import './QuestionCard.css';
 
@@ -29,13 +31,33 @@ const PRIORITY_CONFIG: Record<string, { glow: string; label: string; className: 
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({ question, compact = false }) => {
   const { updateQuestionAction } = useMeetingStore();
+  const { user } = useAuthStore();
+
+  // 백엔드에 피드백 전송 (비동기, 실패해도 UI 업데이트는 진행)
+  const logFeedback = async (action: 'USED' | 'DISMISSED') => {
+    if (!user?.id) return; // 게스트는 로깅 스킵
+
+    try {
+      await userApi.logQuestionAction(user.id, {
+        questionId: question.id,
+        originalText: question.text,
+        category: question.category?.toUpperCase(),
+        action,
+      });
+    } catch (error) {
+      console.error('Failed to log question feedback:', error);
+      // 실패해도 UI는 업데이트됨
+    }
+  };
 
   const handleUse = () => {
     updateQuestionAction(question.id, 'used');
+    logFeedback('USED');
   };
 
   const handleDismiss = () => {
     updateQuestionAction(question.id, 'dismissed');
+    logFeedback('DISMISSED');
   };
 
   // 무시된 질문은 렌더링하지 않음

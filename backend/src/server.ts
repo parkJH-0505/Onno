@@ -7,6 +7,7 @@ import FormData from 'form-data';
 import dotenv from 'dotenv';
 import meetingRoutes from './routes/meetingRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 import * as meetingService from './services/meetingService.js';
 import * as userService from './services/userService.js';
 
@@ -57,6 +58,7 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/users', userRoutes);
 

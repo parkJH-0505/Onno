@@ -57,6 +57,75 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   return result.data as T;
 }
 
+// ============ User & Preferences API ============
+
+interface UserPreferences {
+  id: string;
+  userId: string;
+  businessModelPref: number;
+  tractionPref: number;
+  teamPref: number;
+  marketPref: number;
+  technologyPref: number;
+  financialsPref: number;
+  risksPref: number;
+  tone: 'FORMAL' | 'CASUAL' | 'DIRECT';
+  includeExplanation: boolean;
+  totalQuestionsSeen: number;
+  totalQuestionsUsed: number;
+}
+
+interface QuestionAction {
+  questionId?: string;
+  originalText: string;
+  category?: string;
+  action: 'USED' | 'USED_MODIFIED' | 'IGNORED' | 'DISMISSED';
+  modifiedText?: string;
+  meetingId?: string;
+}
+
+interface UserStats {
+  preferences: UserPreferences;
+  totalSeen: number;
+  totalUsed: number;
+  usageRate: number;
+  actionBreakdown: Array<{ action: string; _count: { action: number } }>;
+  favoriteCategories: Array<{ category: string; _count: { category: number } }>;
+}
+
+export const userApi = {
+  // 사용자 생성 또는 조회
+  getOrCreate: (identifier: string) =>
+    fetchApi<{ id: string; email: string; name: string | null }>('/api/users', {
+      method: 'POST',
+      body: JSON.stringify({ identifier }),
+    }),
+
+  // 사용자 선호도 조회
+  getPreferences: (userId: string) =>
+    fetchApi<UserPreferences>(`/api/users/${userId}/preferences`),
+
+  // 사용자 선호도 업데이트
+  updatePreferences: (userId: string, prefs: Partial<UserPreferences>) =>
+    fetchApi<UserPreferences>(`/api/users/${userId}/preferences`, {
+      method: 'PATCH',
+      body: JSON.stringify(prefs),
+    }),
+
+  // 질문 액션 로깅 (사용/무시/거부)
+  logQuestionAction: (userId: string, action: QuestionAction) =>
+    fetchApi<{ id: string }>(`/api/users/${userId}/question-actions`, {
+      method: 'POST',
+      body: JSON.stringify(action),
+    }),
+
+  // 사용자 통계 조회
+  getStats: (userId: string) =>
+    fetchApi<UserStats>(`/api/users/${userId}/stats`),
+};
+
+// ============ Meeting API ============
+
 export const meetingApi = {
   // 회의 목록 조회
   getAll: () => fetchApi<Meeting[]>('/api/meetings'),

@@ -4,6 +4,9 @@ import type { QuestionCategory, QuestionActionType, ToneStyle } from '@prisma/cl
 // ============ User CRUD ============
 
 export async function createUser(data: { email?: string; name?: string }) {
+  if (!data.email) {
+    throw new Error('이메일은 필수입니다.');
+  }
   return prisma.user.create({
     data: {
       email: data.email,
@@ -53,10 +56,13 @@ export async function getOrCreateUser(identifier: string) {
 
   // 없으면 새로 생성
   if (!user) {
-    user = await createUser({
-      email: identifier.includes('@') ? identifier : undefined,
+    // 이메일이 있으면 생성, 아니면 임시 이메일 생성
+    const email = identifier.includes('@') ? identifier : `${identifier}@guest.onno.ai`;
+    const createdUser = await createUser({
+      email,
       name: identifier.includes('@') ? undefined : identifier,
     });
+    return createdUser;
   }
 
   return user;
