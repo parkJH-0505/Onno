@@ -26,6 +26,31 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 // 현재 활성 회의 추적 (meetingId -> dbMeetingId)
 const activeMeetings = new Map<string, string>();
 
+// 회의별 마지막 전사 텍스트 추적 (중복 방지)
+const lastTranscripts = new Map<string, string>();
+
+// 텍스트 중복 체크 함수: 새 전사가 이전과 다른지 확인
+function getNewContent(meetingId: string, newText: string): string | null {
+  const lastText = lastTranscripts.get(meetingId) || '';
+  const trimmedNew = newText.trim();
+  const trimmedLast = lastText.trim();
+
+  // 완전 동일하면 무시
+  if (trimmedNew === trimmedLast) return null;
+
+  // 새 텍스트가 이전 텍스트에 완전히 포함되면 무시
+  if (trimmedLast.includes(trimmedNew)) return null;
+
+  // 새 텍스트가 이전 텍스트를 포함하면 (누적 전사), 새로운 부분만 추출
+  if (trimmedNew.includes(trimmedLast) && trimmedLast.length > 20) {
+    const newPart = trimmedNew.substring(trimmedLast.length).trim();
+    if (newPart.length < 5) return null; // 새 부분이 너무 짧으면 무시
+    return newPart;
+  }
+
+  return trimmedNew;
+}
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'onno-backend' });
@@ -100,11 +125,21 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // 전사 결과를 클라이언트로 전송 (segments 포함)
+      // 중복 체크: 새로운 내용만 추출
+      const newContent = getNewContent(meetingId, transcript.text);
+      if (!newContent) {
+        console.log('Duplicate transcript, skipping...');
+        return;
+      }
+
+      // 마지막 전사 텍스트 업데이트
+      lastTranscripts.set(meetingId, transcript.text);
+
+      // 전사 결과를 클라이언트로 전송 (새 부분만)
       const transcriptId = Date.now().toString();
       io.to(`meeting-${meetingId}`).emit('transcription', {
         id: transcriptId,
-        text: transcript.text,
+        text: newContent,
         formattedText: transcript.formatted_text,
         segments: transcript.segments || [],
         timestamp: new Date().toISOString(),
@@ -215,6 +250,7 @@ io.on('connection', (socket) => {
         try {
           await meetingService.endMeeting(dbMeetingId);
           activeMeetings.delete(meetingId);
+          lastTranscripts.delete(meetingId); // 전사 추적 정리
           console.log(`Meeting ${dbMeetingId} ended in DB`);
         } catch (error) {
           console.error('Failed to end meeting in DB:', error);

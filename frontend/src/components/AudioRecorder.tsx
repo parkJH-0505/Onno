@@ -18,14 +18,15 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
 
   const { setRecording } = useMeetingStore();
 
-  // 누적된 오디오를 전송하는 함수
-  const sendAccumulatedAudio = useCallback(() => {
+  // 새로운 청크만 전송하는 함수 (중복 방지)
+  const sendNewChunks = useCallback(() => {
     if (chunksRef.current.length > lastSentIndexRef.current) {
-      const allChunks = chunksRef.current.slice(0, chunksRef.current.length);
-      const audioBlob = new Blob(allChunks, { type: 'audio/webm' });
+      // 마지막으로 보낸 이후의 새 청크만 추출
+      const newChunks = chunksRef.current.slice(lastSentIndexRef.current);
+      const audioBlob = new Blob(newChunks, { type: 'audio/webm' });
 
       if (audioBlob.size > 1000) {
-        console.log(`Sending accumulated audio: ${audioBlob.size} bytes (${allChunks.length} chunks)`);
+        console.log(`Sending new audio: ${audioBlob.size} bytes (${newChunks.length} new chunks)`);
         onAudioChunk(audioBlob);
         lastSentIndexRef.current = chunksRef.current.length;
       }
@@ -58,7 +59,7 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
       mediaRecorderRef.current = mediaRecorder;
 
       intervalRef.current = window.setInterval(() => {
-        sendAccumulatedAudio();
+        sendNewChunks();
       }, 5000);
 
       setIsRecording(true);
@@ -81,7 +82,7 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
       mediaRecorderRef.current.stop();
     }
 
-    sendAccumulatedAudio();
+    sendNewChunks();
 
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
