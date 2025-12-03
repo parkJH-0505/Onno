@@ -1,0 +1,202 @@
+/* ============================================
+   ONNO DESIGN SYSTEM - Card Components
+   ============================================ */
+
+/* ============================================
+   BASE CARD
+   ============================================ */
+.onno-card {
+  border-radius: var(--radius-xl);
+  transition: all var(--transition-normal);
+}
+
+/* Variants */
+.onno-card--default {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.onno-card--glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+}
+
+.onno-card--elevated {
+  background: var(--color-bg-elevated);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.onno-card--bordered {
+  background: transparent;
+  border: 1px solid var(--color-border);
+}
+
+/* Padding */
+.onno-card--padding-none {
+  padding: 0;
+}
+
+.onno-card--padding-sm {
+  padding: var(--space-3);
+}
+
+.onno-card--padding-md {
+  padding: var(--space-5);
+}
+
+.onno-card--padding-lg {
+  padding: var(--space-6);
+}
+
+/* Hover Effect */
+.onno-card--hover:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-hover);
+}
+
+.onno-card--glass.onno-card--hover:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+}
+
+/* Active State */
+.onno-card--active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* ============================================
+   GLASS CARD (Enhanced)
+   ============================================ */
+.onno-glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-glass);
+  transition: all var(--transition-normal);
+}
+
+.onno-glass-card:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-2px);
+}
+
+/* Padding */
+.onno-glass-card--padding-none {
+  padding: 0;
+}
+
+.onno-glass-card--padding-sm {
+  padding: var(--space-3);
+}
+
+.onno-glass-card--padding-md {
+  padding: var(--space-5);
+}
+
+.onno-glass-card--padding-lg {
+  padding: var(--space-6);
+}
+
+/* Glow Effects */
+.onno-glass-card--glow-primary {
+  box-shadow: var(--shadow-glass), var(--shadow-glow-primary);
+}
+
+.onno-glass-card--glow-success {
+  box-shadow: var(--shadow-glass), var(--shadow-glow-success);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.onno-glass-card--glow-live {
+  box-shadow: var(--shadow-glass), var(--shadow-glow-live);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.onno-glass-card--glow-insight {
+  box-shadow: var(--shadow-glass), 0 0 20px rgba(245, 158, 11, 0.3);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* Animation */
+.onno-glass-card--animate {
+  animation: breathe 2s infinite;
+}
+
+/* ============================================
+   CARD HEADER
+   ============================================ */
+.onno-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+  margin-bottom: var(--space-4);
+}
+
+.onno-card-header__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.onno-card-header__title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.onno-card-header__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: var(--space-1) 0 0 0;
+}
+
+.onno-card-header__action {
+  flex-shrink: 0;
+}
+
+/* ============================================
+   CARD BODY
+   ============================================ */
+.onno-card-body {
+  flex: 1;
+}
+
+/* ============================================
+   CARD FOOTER
+   ============================================ */
+.onno-card-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-subtle);
+  margin-top: var(--space-4);
+}
+
+.onno-card-footer--left {
+  justify-content: flex-start;
+}
+
+.onno-card-footer--center {
+  justify-content: center;
+}
+
+.onno-card-footer--right {
+  justify-content: flex-end;
+}
+
+.onno-card-footer--between {
+  justify-content: space-between;
+}

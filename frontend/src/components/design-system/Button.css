@@ -1,0 +1,207 @@
+/* ============================================
+   ONNO DESIGN SYSTEM - Button Component
+   ============================================ */
+
+/* Base Button */
+.onno-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-family);
+  font-weight: 500;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.onno-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   VARIANTS
+   ============================================ */
+
+/* Primary */
+.onno-button--primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.onno-button--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.onno-button--primary:active:not(:disabled) {
+  background: var(--color-primary-active);
+  transform: scale(0.98);
+}
+
+/* Secondary */
+.onno-button--secondary {
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+.onno-button--secondary:hover:not(:disabled) {
+  background: var(--color-bg-elevated);
+  border-color: var(--color-border-hover);
+}
+
+.onno-button--secondary:active:not(:disabled) {
+  background: var(--color-bg-overlay);
+  transform: scale(0.98);
+}
+
+/* Ghost */
+.onno-button--ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.onno-button--ghost:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background: var(--color-bg-elevated);
+}
+
+.onno-button--ghost:active:not(:disabled) {
+  background: var(--color-bg-overlay);
+  transform: scale(0.98);
+}
+
+/* Danger */
+.onno-button--danger {
+  background: var(--color-error);
+  color: white;
+}
+
+.onno-button--danger:hover:not(:disabled) {
+  background: #DC2626;
+  box-shadow: var(--shadow-glow-live);
+}
+
+.onno-button--danger:active:not(:disabled) {
+  background: #B91C1C;
+  transform: scale(0.98);
+}
+
+/* ============================================
+   SIZES
+   ============================================ */
+
+.onno-button--sm {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-sm);
+}
+
+.onno-button--md {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-size-sm);
+}
+
+.onno-button--lg {
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--font-size-base);
+  border-radius: var(--radius-lg);
+}
+
+/* ============================================
+   STATES
+   ============================================ */
+
+/* Full Width */
+.onno-button--full {
+  width: 100%;
+}
+
+/* Disabled */
+.onno-button--disabled,
+.onno-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Loading */
+.onno-button--loading {
+  cursor: wait;
+  pointer-events: none;
+}
+
+/* ============================================
+   INNER ELEMENTS
+   ============================================ */
+
+/* Spinner */
+.onno-button__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: button-spin 0.6s linear infinite;
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Icon */
+.onno-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.onno-button--sm .onno-button__icon {
+  width: 14px;
+  height: 14px;
+}
+
+.onno-button--md .onno-button__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.onno-button--lg .onno-button__icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Text */
+.onno-button__text {
+  flex: 0 0 auto;
+}
+
+/* ============================================
+   RIPPLE EFFECT (optional)
+   ============================================ */
+
+.onno-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  opacity: 0;
+  transform: scale(0);
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+.onno-button:active::after {
+  opacity: 1;
+  transform: scale(2);
+  transition: transform 0s, opacity 0s;
+}

@@ -1,0 +1,283 @@
+/* ============================================
+   MEETING ROOM V2 - New Design System Layout
+   ============================================ */
+
+.meeting-room-v2 {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-bg-abyss);
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.meeting-room-v2__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-bg-base);
+  border-bottom: 1px solid var(--color-border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+.meeting-room-v2__header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.meeting-room-v2__back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.meeting-room-v2__back-btn:hover {
+  background: var(--color-bg-overlay);
+  border-color: var(--color-border-hover);
+  color: var(--color-text-primary);
+}
+
+.meeting-room-v2__brand {
+  display: flex;
+  flex-direction: column;
+}
+
+.meeting-room-v2__logo {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.meeting-room-v2__tagline {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.meeting-room-v2__header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.meeting-room-v2__header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.meeting-room-v2__status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border-radius: var(--radius-full);
+}
+
+.meeting-room-v2__status-badge--warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--color-warning);
+}
+
+.meeting-room-v2__status-badge--success {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-success);
+}
+
+.meeting-room-v2__status-badge--error {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-error);
+}
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
+.meeting-room-v2__main {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left Panel */
+.meeting-room-v2__left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 0;
+}
+
+.meeting-room-v2__controls {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.meeting-room-v2__transcript {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.meeting-room-v2__transcript-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+/* Right Panel */
+.meeting-room-v2__right {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.meeting-room-v2__questions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.meeting-room-v2__questions-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.meeting-room-v2__questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ============================================
+   PANEL HEADER
+   ============================================ */
+.meeting-room-v2__panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+.meeting-room-v2__panel-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.meeting-room-v2__question-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--space-1);
+  background: var(--color-primary);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.meeting-room-v2__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-10) var(--space-5);
+  height: 100%;
+}
+
+.meeting-room-v2__empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-5);
+}
+
+.meeting-room-v2__empty-text {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-2) 0;
+  line-height: 1.5;
+}
+
+.meeting-room-v2__empty-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1024px) {
+  .meeting-room-v2__main {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .meeting-room-v2__right {
+    max-height: 50vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .meeting-room-v2__header {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .meeting-room-v2__header-center {
+    display: none;
+  }
+
+  .meeting-room-v2__main {
+    padding: var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .meeting-room-v2__tagline {
+    display: none;
+  }
+}

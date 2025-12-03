@@ -1,0 +1,305 @@
+/* ============================================
+   ONNO DESIGN SYSTEM - Record Button
+   핵심 인터랙션: 녹음 시작/중지 버튼
+   ============================================ */
+
+/* ============================================
+   MAIN RECORD BUTTON
+   ============================================ */
+.record-button-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.record-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  background: var(--color-bg-elevated);
+  border: 2px solid var(--color-border);
+}
+
+.record-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+}
+
+/* Sizes */
+.record-button--sm {
+  width: 56px;
+  height: 56px;
+}
+
+.record-button--md {
+  width: 72px;
+  height: 72px;
+}
+
+.record-button--lg {
+  width: 96px;
+  height: 96px;
+}
+
+/* Hover state (not recording) */
+.record-button:not(.record-button--recording):hover {
+  background: var(--color-bg-overlay);
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+}
+
+/* Recording state */
+.record-button--recording {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--color-live);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+.record-button--recording:hover {
+  background: rgba(239, 68, 68, 0.15);
+  transform: scale(1.02);
+}
+
+/* Disabled state */
+.record-button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============================================
+   RIPPLE EFFECTS (Recording animation)
+   ============================================ */
+.record-button__ripple {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--color-live);
+  border-radius: var(--radius-full);
+  opacity: 0;
+  animation: recordRipple 2s infinite;
+}
+
+.record-button__ripple--1 {
+  animation-delay: 0s;
+}
+
+.record-button__ripple--2 {
+  animation-delay: 0.5s;
+}
+
+.record-button__ripple--3 {
+  animation-delay: 1s;
+}
+
+@keyframes recordRipple {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   INNER CONTENT
+   ============================================ */
+.record-button__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Microphone icon */
+.record-button__mic {
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.record-button--sm .record-button__mic {
+  width: 24px;
+  height: 24px;
+}
+
+.record-button--md .record-button__mic {
+  width: 32px;
+  height: 32px;
+}
+
+.record-button--lg .record-button__mic {
+  width: 40px;
+  height: 40px;
+}
+
+.record-button:hover .record-button__mic {
+  color: var(--color-primary);
+}
+
+/* Stop icon (square) */
+.record-button__stop {
+  background: var(--color-live);
+  border-radius: var(--radius-sm);
+  animation: stopPulse 1s infinite;
+}
+
+.record-button--sm .record-button__stop {
+  width: 20px;
+  height: 20px;
+}
+
+.record-button--md .record-button__stop {
+  width: 24px;
+  height: 24px;
+}
+
+.record-button--lg .record-button__stop {
+  width: 32px;
+  height: 32px;
+}
+
+@keyframes stopPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* ============================================
+   LABEL
+   ============================================ */
+.record-button__label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: all var(--transition-fast);
+}
+
+.record-button__label--recording {
+  color: var(--color-live);
+}
+
+.record-button__live-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--color-live);
+  border-radius: var(--radius-full);
+  animation: liveDotPulse 1s infinite;
+}
+
+@keyframes liveDotPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+/* ============================================
+   INLINE RECORD BUTTON (Header/Toolbar)
+   ============================================ */
+.inline-record-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.inline-record-button:hover {
+  background: var(--color-bg-overlay);
+  border-color: var(--color-border-hover);
+  color: var(--color-text-primary);
+}
+
+.inline-record-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Recording state */
+.inline-record-button--recording {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--color-live);
+  color: var(--color-live);
+}
+
+.inline-record-button--recording:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Indicator */
+.inline-record-button__indicator {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.inline-record-button__dot {
+  width: 8px;
+  height: 8px;
+  background: var(--color-text-muted);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+}
+
+.inline-record-button__dot--active {
+  background: var(--color-live);
+  animation: liveDotPulse 1s infinite;
+}
+
+.inline-record-button__pulse {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--color-live);
+  border-radius: var(--radius-full);
+  animation: inlinePulse 1.5s infinite;
+}
+
+@keyframes inlinePulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.inline-record-button__text {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Disabled */
+.inline-record-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
