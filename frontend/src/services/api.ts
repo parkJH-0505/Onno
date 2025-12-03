@@ -238,7 +238,35 @@ export const relationshipApi = {
   // 관계의 회의 목록
   getMeetings: (id: string, limit = 20, offset = 0) =>
     fetchApi<Meeting[]>(`/api/relationships/${id}/meetings?limit=${limit}&offset=${offset}`),
+
+  // 관계의 맥락 조회 (회의 시작 시 사용)
+  getContext: (id: string) =>
+    fetchApi<RelationshipContext>(`/api/relationships/${id}/context`),
 };
+
+// 관계 맥락 타입 정의
+export interface RelationshipContext {
+  relationship: {
+    id: string;
+    name: string;
+    type: RelationshipType;
+    industry?: Industry;
+    stage?: FundingStage;
+    status: RelationshipStatus;
+    notes?: string;
+    tags: string[];
+  };
+  structuredData: Record<string, unknown>;
+  recentMeetings: Array<{
+    meetingNumber: number;
+    date: string;
+    duration: number | null;
+    summary: string | null;
+    keyQuestions: string[];
+  }>;
+  totalMeetings: number;
+  nextMeetingNumber: number;
+}
 
 // ============ Meeting API ============
 

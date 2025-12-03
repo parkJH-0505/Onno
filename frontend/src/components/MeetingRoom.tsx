@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AudioRecorder } from './AudioRecorder';
 import { TranscriptPanel } from './TranscriptPanel';
+import { ContextPanel } from './ContextPanel';
 import { QuestionCard } from './design-system/QuestionCard';
 import { Button, GlassCard, InlineRecordButton } from './design-system';
 import { useMeetingStore } from '../stores/meetingStore';
@@ -21,6 +22,7 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth, relationshipId, r
   const [meetingId] = useState(() => 'meeting-' + Date.now());
   const [duration, setDuration] = useState('00:00');
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [contextCollapsed, setContextCollapsed] = useState(false);
 
   const WS_URL = import.meta.env.VITE_WS_URL || 'https://onno-backend.onrender.com';
   const USER_ID = 'user-1';
@@ -151,9 +153,20 @@ export function MeetingRoom({ onBack, onGoToAuth: _onGoToAuth, relationshipId, r
       </header>
 
       {/* Main Content */}
-      <main className="meeting-room-v2__main">
-        {/* Left Panel - Controls & Transcript */}
-        <div className="meeting-room-v2__left">
+      <main className={`meeting-room-v2__main ${relationshipId ? 'meeting-room-v2__main--with-context' : ''}`}>
+        {/* Context Panel (관계가 있을 때만 표시) */}
+        {relationshipId && (
+          <div className={`meeting-room-v2__context ${contextCollapsed ? 'meeting-room-v2__context--collapsed' : ''}`}>
+            <ContextPanel
+              relationshipId={relationshipId}
+              isCollapsed={contextCollapsed}
+              onToggle={() => setContextCollapsed(!contextCollapsed)}
+            />
+          </div>
+        )}
+
+        {/* Center Panel - Controls & Transcript */}
+        <div className="meeting-room-v2__center">
           {/* Recording Controls */}
           <GlassCard padding="lg" className="meeting-room-v2__controls">
             <AudioRecorder onAudioChunk={handleAudioChunk} />

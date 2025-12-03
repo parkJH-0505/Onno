@@ -124,7 +124,34 @@
   overflow: hidden;
 }
 
-/* Left Panel */
+/* 맥락 패널이 있는 3열 레이아웃 */
+.meeting-room-v2__main--with-context {
+  grid-template-columns: 280px 1fr 360px;
+}
+
+/* Context Panel (Left) */
+.meeting-room-v2__context {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  transition: width var(--transition-normal);
+}
+
+.meeting-room-v2__context--collapsed {
+  width: 48px;
+  min-width: 48px;
+}
+
+/* Center Panel (was Left Panel) */
+.meeting-room-v2__center {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 0;
+}
+
+/* Left Panel (기존 호환성 유지) */
 .meeting-room-v2__left {
   display: flex;
   flex-direction: column;
@@ -259,10 +286,25 @@
 /* ============================================
    RESPONSIVE
    ============================================ */
+@media (max-width: 1200px) {
+  .meeting-room-v2__main--with-context {
+    grid-template-columns: 240px 1fr 320px;
+  }
+}
+
 @media (max-width: 1024px) {
   .meeting-room-v2__main {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
+  }
+
+  .meeting-room-v2__main--with-context {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .meeting-room-v2__context {
+    display: none; /* 작은 화면에서는 맥락 패널 숨김 */
   }
 
   .meeting-room-v2__right {

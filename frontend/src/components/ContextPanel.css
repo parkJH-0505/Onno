@@ -1,0 +1,248 @@
+/* ============================================
+   CONTEXT PANEL - 회의 중 맥락 표시
+   Phase 2: 맥락 연동 시스템
+   ============================================ */
+
+.context-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.context-panel--loading,
+.context-panel--error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.context-panel__spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Header */
+.context-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: var(--color-bg-elevated);
+}
+
+.context-panel__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.context-panel__meeting-number {
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-primary-muted);
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.context-panel__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.context-panel__toggle:hover {
+  background: var(--color-bg-overlay);
+  color: var(--color-text-primary);
+}
+
+/* Content */
+.context-panel__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.context-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.context-panel__section-title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+/* Info */
+.context-panel__info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.context-panel__type,
+.context-panel__industry,
+.context-panel__stage {
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+/* Metrics */
+.context-panel__metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.context-panel__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
+}
+
+.context-panel__metric-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.context-panel__metric-value {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* Meetings */
+.context-panel__meetings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.context-panel__meeting {
+  padding: var(--space-3);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+}
+
+.context-panel__meeting-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.context-panel__meeting-number-badge {
+  padding: 2px var(--space-2);
+  background: var(--color-primary-muted);
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.context-panel__meeting-date {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.context-panel__meeting-summary {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.context-panel__key-questions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.context-panel__key-question {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding-left: var(--space-2);
+  border-left: 2px solid var(--color-border);
+}
+
+/* Notes */
+.context-panel__notes {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+  padding: var(--space-3);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+}
+
+/* Tags */
+.context-panel__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.context-panel__tag {
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* Collapsed State */
+.context-panel--collapsed .context-panel__content {
+  display: none;
+}
+
+.context-panel--collapsed {
+  flex: 0 0 auto;
+}

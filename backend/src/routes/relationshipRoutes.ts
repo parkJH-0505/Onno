@@ -237,6 +237,85 @@ router.delete('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// 관계 객체의 맥락 조회 (회의 시작 시 사용)
+// Phase 2: 맥락 연동 시스템의 핵심 API
+router.get('/:id/context', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const relationship = await prisma.relationshipObject.findUnique({
+      where: { id },
+      include: {
+        meetings: {
+          where: { status: { in: ['ENDED', 'COMPLETED'] } },
+          orderBy: { startedAt: 'desc' },
+          take: 5,
+          select: {
+            id: true,
+            title: true,
+            meetingNumber: true,
+            meetingType: true,
+            startedAt: true,
+            duration: true,
+            summary: true,
+            questions: {
+              where: { isUsed: true },
+              take: 5,
+              orderBy: { priority: 'desc' },
+              select: {
+                text: true,
+                category: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: { meetings: true },
+        },
+      },
+    });
+
+    if (!relationship) {
+      res.status(404).json({ success: false, error: '관계 객체를 찾을 수 없습니다.' });
+      return;
+    }
+
+    // 맥락 정보 구성
+    const context = {
+      // 기본 정보
+      relationship: {
+        id: relationship.id,
+        name: relationship.name,
+        type: relationship.type,
+        industry: relationship.industry,
+        stage: relationship.stage,
+        status: relationship.status,
+        notes: relationship.notes,
+        tags: relationship.tags,
+      },
+      // 구조화 데이터 (MRR, CAC, LTV 등)
+      structuredData: relationship.structuredData || {},
+      // 과거 회의 요약
+      recentMeetings: relationship.meetings.map(m => ({
+        meetingNumber: m.meetingNumber,
+        date: m.startedAt,
+        duration: m.duration,
+        summary: m.summary,
+        keyQuestions: m.questions.map(q => q.text),
+      })),
+      // 총 미팅 횟수
+      totalMeetings: relationship._count.meetings,
+      // 다음 미팅 번호
+      nextMeetingNumber: relationship._count.meetings + 1,
+    };
+
+    res.json({ success: true, data: context });
+  } catch (error) {
+    console.error('Failed to get relationship context:', error);
+    res.status(500).json({ success: false, error: '맥락 정보를 가져오는데 실패했습니다.' });
+  }
+});
+
 // 관계 객체의 회의 목록 조회
 router.get('/:id/meetings', async (req: Request, res: Response) => {
   try {
