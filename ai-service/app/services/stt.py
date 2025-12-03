@@ -424,9 +424,9 @@ async def transcribe_audio(audio_file: BinaryIO) -> dict:
     """
     음성 파일을 텍스트로 전사 (메인 함수)
 
-    전략:
-    1. Daglo API 사용 시도 (webm → wav 변환)
-    2. Daglo 실패시 Whisper fallback
+    전략 (v2 - Whisper 우선):
+    1. Whisper API 사용 (webm 직접 지원, 안정적)
+    2. Whisper 실패시 Daglo fallback (wav 변환 필요)
     3. 모두 실패시 빈 결과 반환 (에러 대신)
 
     Args:
@@ -439,7 +439,7 @@ async def transcribe_audio(audio_file: BinaryIO) -> dict:
             "segments": list,         # 화자별 세그먼트
             "duration": float,
             "latency": float,
-            "provider": str           # daglo_sync, daglo_async, whisper
+            "provider": str           # whisper, daglo_sync, daglo_async
         }
     """
     start_time = time.time()
@@ -460,42 +460,40 @@ async def transcribe_audio(audio_file: BinaryIO) -> dict:
             "provider": "skipped"
         }
 
-    # Daglo API 시도
-    if DAGLO_API_TOKEN:
-        try:
-            logger.info("Attempting Daglo STT with wav conversion...")
-
-            # webm → wav 변환
-            wav_content = convert_webm_to_wav(audio_content)
-
-            # Daglo API 호출
-            result = await transcribe_audio_daglo_sync(wav_content, is_wav=True)
-
-            # 빈 결과면 Whisper로 fallback
-            if not result.get("text", "").strip():
-                logger.warning("Daglo returned empty transcript, falling back to Whisper")
-                raise Exception("Empty transcript from Daglo")
-
-            logger.info(f"Daglo STT success, provider: {result.get('provider')}")
-            return result
-
-        except Exception as e:
-            logger.error(f"Daglo STT failed, falling back to Whisper: {e}")
-
-    # Whisper fallback
+    # 1. Whisper API 시도 (기본 - webm 직접 지원)
     openai_key = os.getenv("OPENAI_API_KEY")
     if openai_key:
         try:
-            logger.info("Using Whisper STT...")
+            logger.info("Using Whisper STT (primary)...")
             audio_file_like = io.BytesIO(audio_content)
-            audio_file_like.name = "audio.webm"  # Whisper needs filename
+            audio_file_like.name = "audio.webm"
             result = await transcribe_audio_whisper(audio_file_like)
-            logger.info(f"Whisper STT complete, provider: {result.get('provider')}")
-            return result
+
+            # 빈 결과가 아니면 성공
+            if result.get("text", "").strip():
+                logger.info(f"Whisper STT success: {result.get('text', '')[:50]}...")
+                return result
+            else:
+                logger.warning("Whisper returned empty transcript")
+
         except Exception as e:
-            logger.error(f"Whisper STT also failed: {e}")
-    else:
-        logger.warning("OPENAI_API_KEY not configured, cannot use Whisper fallback")
+            logger.error(f"Whisper STT failed: {e}")
+
+    # 2. Daglo API fallback (wav 변환 필요)
+    if DAGLO_API_TOKEN:
+        try:
+            logger.info("Attempting Daglo STT fallback with wav conversion...")
+            wav_content = convert_webm_to_wav(audio_content)
+            result = await transcribe_audio_daglo_sync(wav_content, is_wav=True)
+
+            if result.get("text", "").strip():
+                logger.info(f"Daglo STT success: {result.get('text', '')[:50]}...")
+                return result
+            else:
+                logger.warning("Daglo returned empty transcript")
+
+        except Exception as e:
+            logger.error(f"Daglo STT fallback failed: {e}")
 
     # 모든 STT 실패시 빈 결과 반환 (500 에러 대신)
     logger.error("All STT providers failed, returning empty result")
