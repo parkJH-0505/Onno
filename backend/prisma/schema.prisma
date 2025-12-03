@@ -1,0 +1,119 @@
+// Onno Meeting Storage Schema
+// Phase 2-2: 회의 저장 시스템
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 회의 (Meeting)
+model Meeting {
+  id          String   @id @default(cuid())
+  title       String?
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  status      MeetingStatus @default(ACTIVE)
+
+  // 회의 메타데이터
+  duration    Int?     // 초 단위
+  summary     String?  // AI 생성 요약
+
+  // 관계
+  transcripts Transcript[]
+  questions   Question[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([startedAt])
+}
+
+enum MeetingStatus {
+  ACTIVE      // 진행 중
+  ENDED       // 종료됨
+  PROCESSING  // 후처리 중 (화자분리 등)
+  COMPLETED   // 완료
+}
+
+// 전사 기록 (Transcript)
+model Transcript {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  // 전사 내용
+  text        String
+  formattedText String?
+
+  // 화자 정보
+  speaker     String?
+  speakerRole SpeakerRole?
+
+  // 타이밍
+  startTime   Float?   // 회의 시작 기준 초
+  endTime     Float?
+
+  // 메타데이터
+  provider    String?  // daglo, whisper
+  latency     Float?   // STT 처리 시간
+
+  createdAt   DateTime @default(now())
+
+  @@index([meetingId])
+  @@index([createdAt])
+}
+
+enum SpeakerRole {
+  INVESTOR
+  FOUNDER
+  UNKNOWN
+}
+
+// AI 생성 질문 (Question)
+model Question {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  // 질문 내용
+  text        String
+  category    QuestionCategory?
+  priority    Int      @default(0)  // 높을수록 중요
+
+  // 질문 상태
+  isUsed      Boolean  @default(false)  // 사용자가 사용했는지
+  isFavorite  Boolean  @default(false)  // 즐겨찾기
+  feedback    QuestionFeedback?
+
+  // 맥락
+  context     String?  // 질문 생성 맥락 (어떤 발화에서 생성됐는지)
+
+  createdAt   DateTime @default(now())
+
+  @@index([meetingId])
+  @@index([category])
+  @@index([isUsed])
+}
+
+enum QuestionCategory {
+  BUSINESS_MODEL
+  TRACTION
+  TEAM
+  MARKET
+  TECHNOLOGY
+  FINANCIALS
+  RISKS
+  GENERAL
+}
+
+enum QuestionFeedback {
+  HELPFUL
+  NOT_HELPFUL
+  SKIP
+}

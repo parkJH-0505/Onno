@@ -5,6 +5,8 @@ import cors from 'cors';
 import axios from 'axios';
 import FormData from 'form-data';
 import dotenv from 'dotenv';
+import meetingRoutes from './routes/meetingRoutes.js';
+import * as meetingService from './services/meetingService.js';
 
 dotenv.config();
 
@@ -19,23 +21,47 @@ const io = new Server(httpServer, {
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
+// 현재 활성 회의 추적 (meetingId -> dbMeetingId)
+const activeMeetings = new Map<string, string>();
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'onno-backend' });
 });
 
+// Meeting API Routes
+app.use('/api/meetings', meetingRoutes);
+
 // WebSocket 연결 처리
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
-  socket.on('join_meeting', (data) => {
-    const { meetingId, userId } = data;
+  socket.on('join_meeting', async (data) => {
+    const { meetingId, userId, title } = data;
     socket.join(`meeting-${meetingId}`);
     console.log(`User ${userId} joined meeting ${meetingId}`);
+
+    // 데이터베이스에 회의 생성 (아직 없으면)
+    if (!activeMeetings.has(meetingId)) {
+      try {
+        const dbMeeting = await meetingService.createMeeting(title || `Meeting ${meetingId}`);
+        activeMeetings.set(meetingId, dbMeeting.id);
+        console.log(`Created meeting in DB: ${dbMeeting.id}`);
+      } catch (error) {
+        console.error('Failed to create meeting in DB:', error);
+      }
+    }
 
     // 참가자에게 알림
     socket.to(`meeting-${meetingId}`).emit('participant_joined', {
       userId,
+      timestamp: new Date().toISOString()
+    });
+
+    // DB 회의 ID 전송
+    socket.emit('meeting_joined', {
+      meetingId,
+      dbMeetingId: activeMeetings.get(meetingId),
       timestamp: new Date().toISOString()
     });
   });
@@ -72,8 +98,9 @@ io.on('connection', (socket) => {
       }
 
       // 전사 결과를 클라이언트로 전송 (segments 포함)
+      const transcriptId = Date.now().toString();
       io.to(`meeting-${meetingId}`).emit('transcription', {
-        id: Date.now().toString(),
+        id: transcriptId,
         text: transcript.text,
         formattedText: transcript.formatted_text,
         segments: transcript.segments || [],
@@ -81,6 +108,38 @@ io.on('connection', (socket) => {
         latency: transcript.latency,
         provider: transcript.provider
       });
+
+      // 데이터베이스에 전사 저장
+      const dbMeetingId = activeMeetings.get(meetingId);
+      if (dbMeetingId) {
+        try {
+          // 각 세그먼트별로 저장
+          const segments = transcript.segments || [];
+          if (segments.length > 0) {
+            for (const seg of segments) {
+              await meetingService.addTranscript(dbMeetingId, {
+                text: seg.text,
+                speaker: seg.speaker,
+                speakerRole: seg.speakerRole,
+                startTime: seg.startTime,
+                provider: transcript.provider,
+                latency: transcript.latency,
+              });
+            }
+          } else {
+            // 세그먼트가 없으면 전체 텍스트로 저장
+            await meetingService.addTranscript(dbMeetingId, {
+              text: transcript.text,
+              formattedText: transcript.formatted_text,
+              provider: transcript.provider,
+              latency: transcript.latency,
+            });
+          }
+          console.log('Transcript saved to DB');
+        } catch (error) {
+          console.error('Failed to save transcript to DB:', error);
+        }
+      }
 
       // 전사가 일정 길이 이상이면 질문 생성
       if (transcript.text.length > 50) {
@@ -95,14 +154,30 @@ io.on('connection', (socket) => {
         const questions = questionResponse.data.questions;
         console.log(`Generated ${questions.length} questions`);
 
-        // 질문들을 클라이언트로 전송
-        questions.forEach((question: any) => {
+        // 질문들을 클라이언트로 전송 및 DB 저장
+        for (const question of questions) {
+          const questionId = Date.now().toString() + Math.random();
+
           io.to(`meeting-${meetingId}`).emit('question_suggested', {
-            id: Date.now().toString() + Math.random(),
+            id: questionId,
             ...question,
             timestamp: new Date().toISOString()
           });
-        });
+
+          // DB에 질문 저장
+          if (dbMeetingId) {
+            try {
+              await meetingService.addQuestion(dbMeetingId, {
+                text: question.text,
+                category: question.category,
+                priority: question.priority || 0,
+                context: transcript.text.substring(0, 200), // 맥락 저장
+              });
+            } catch (error) {
+              console.error('Failed to save question to DB:', error);
+            }
+          }
+        }
       }
 
     } catch (error: any) {
@@ -114,10 +189,24 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('leave_meeting', (data) => {
-    const { meetingId, userId } = data;
+  socket.on('leave_meeting', async (data) => {
+    const { meetingId, userId, endMeeting: shouldEnd } = data;
     socket.leave(`meeting-${meetingId}`);
     console.log(`User ${userId} left meeting ${meetingId}`);
+
+    // 회의 종료 요청 시 DB에서 회의 종료 처리
+    if (shouldEnd) {
+      const dbMeetingId = activeMeetings.get(meetingId);
+      if (dbMeetingId) {
+        try {
+          await meetingService.endMeeting(dbMeetingId);
+          activeMeetings.delete(meetingId);
+          console.log(`Meeting ${dbMeetingId} ended in DB`);
+        } catch (error) {
+          console.error('Failed to end meeting in DB:', error);
+        }
+      }
+    }
 
     socket.to(`meeting-${meetingId}`).emit('participant_left', {
       userId,
