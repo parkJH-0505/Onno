@@ -249,16 +249,23 @@ export function RelationshipListPage({
               )}
 
               <div className="relationship-card__footer">
-                <Button
-                  variant="primary"
-                  size="sm"
+                <span
+                  className="relationship-card__action-btn"
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => {
                     e.stopPropagation();
                     onStartMeeting(rel.id, rel.name);
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.stopPropagation();
+                      onStartMeeting(rel.id, rel.name);
+                    }
+                  }}
                 >
                   회의 시작
-                </Button>
+                </span>
               </div>
             </Card>
           ))}

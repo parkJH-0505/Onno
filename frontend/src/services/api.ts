@@ -198,9 +198,11 @@ export const relationshipApi = {
     offset?: number;
   }) => {
     const searchParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) searchParams.append(key, String(value));
-    });
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) searchParams.append(key, String(value));
+      });
+    }
     return fetchApi<RelationshipObject[]>(`/api/relationships?${searchParams}`);
   },
 
