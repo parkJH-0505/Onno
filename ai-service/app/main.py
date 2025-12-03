@@ -55,20 +55,29 @@ async def transcribe(audio: UploadFile = File(...)):
     음성 파일을 받아 텍스트로 전사
     """
     try:
-        logger.info(f"Transcribing audio: {audio.filename} (Mock: {MOCK_MODE})")
+        logger.info(f"Transcribing audio: {audio.filename}, size: {audio.size} (Mock: {MOCK_MODE})")
 
         if MOCK_MODE:
             result = await mock_transcribe_audio(audio.file)
             logger.info(f"[MOCK] Transcription complete: {result['latency']:.2f}s")
         else:
             result = await transcribe_audio(audio.file)
-            logger.info(f"Transcription complete: {result['latency']:.2f}s")
+            logger.info(f"Transcription complete: {result['latency']:.2f}s, provider: {result.get('provider', 'unknown')}")
 
         return result
 
     except Exception as e:
-        logger.error(f"Transcription error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Transcription error: {str(e)}", exc_info=True)
+        # 에러 발생시에도 빈 결과 반환 (500 대신)
+        return {
+            "text": "",
+            "formatted_text": "",
+            "segments": [],
+            "duration": 0,
+            "latency": 0,
+            "provider": "error",
+            "error": str(e)
+        }
 
 
 @app.post("/api/questions/generate")

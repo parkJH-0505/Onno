@@ -427,6 +427,7 @@ async def transcribe_audio(audio_file: BinaryIO) -> dict:
     전략:
     1. Daglo API 사용 시도 (webm → wav 변환)
     2. Daglo 실패시 Whisper fallback
+    3. 모두 실패시 빈 결과 반환 (에러 대신)
 
     Args:
         audio_file: 업로드된 오디오 파일
@@ -441,9 +442,23 @@ async def transcribe_audio(audio_file: BinaryIO) -> dict:
             "provider": str           # daglo_sync, daglo_async, whisper
         }
     """
+    start_time = time.time()
+
     # 파일 내용 읽기
     audio_content = audio_file.read()
     logger.info(f"transcribe_audio called, audio size: {len(audio_content)} bytes")
+
+    # 오디오가 너무 작으면 빈 결과 반환
+    if len(audio_content) < 1000:
+        logger.warning(f"Audio too small ({len(audio_content)} bytes), returning empty")
+        return {
+            "text": "",
+            "formatted_text": "",
+            "segments": [],
+            "duration": 0,
+            "latency": time.time() - start_time,
+            "provider": "skipped"
+        }
 
     # Daglo API 시도
     if DAGLO_API_TOKEN:
@@ -468,12 +483,30 @@ async def transcribe_audio(audio_file: BinaryIO) -> dict:
             logger.error(f"Daglo STT failed, falling back to Whisper: {e}")
 
     # Whisper fallback
-    logger.info("Using Whisper STT...")
-    audio_file_like = io.BytesIO(audio_content)
-    audio_file_like.name = "audio.webm"  # Whisper needs filename
-    result = await transcribe_audio_whisper(audio_file_like)
-    logger.info(f"Whisper STT complete, provider: {result.get('provider')}")
-    return result
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if openai_key:
+        try:
+            logger.info("Using Whisper STT...")
+            audio_file_like = io.BytesIO(audio_content)
+            audio_file_like.name = "audio.webm"  # Whisper needs filename
+            result = await transcribe_audio_whisper(audio_file_like)
+            logger.info(f"Whisper STT complete, provider: {result.get('provider')}")
+            return result
+        except Exception as e:
+            logger.error(f"Whisper STT also failed: {e}")
+    else:
+        logger.warning("OPENAI_API_KEY not configured, cannot use Whisper fallback")
+
+    # 모든 STT 실패시 빈 결과 반환 (500 에러 대신)
+    logger.error("All STT providers failed, returning empty result")
+    return {
+        "text": "",
+        "formatted_text": "",
+        "segments": [],
+        "duration": 0,
+        "latency": time.time() - start_time,
+        "provider": "failed"
+    }
 
 
 # Legacy function for compatibility
