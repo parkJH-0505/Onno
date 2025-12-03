@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMeetingStore } from '../stores/meetingStore';
 import { RecordButton } from './design-system';
 import './AudioRecorder.css';
@@ -14,31 +14,49 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const intervalRef = useRef<number | null>(null);
-  const lastSentIndexRef = useRef<number>(0);
+  const onAudioChunkRef = useRef(onAudioChunk);
+  const isSendingRef = useRef(false);
 
   const { setRecording } = useMeetingStore();
 
-  // 새로운 청크만 전송하는 함수 (중복 방지)
-  const sendNewChunks = useCallback(() => {
-    if (chunksRef.current.length > lastSentIndexRef.current) {
-      // 마지막으로 보낸 이후의 새 청크만 추출
-      const newChunks = chunksRef.current.slice(lastSentIndexRef.current);
-      const audioBlob = new Blob(newChunks, { type: 'audio/webm' });
-
-      if (audioBlob.size > 1000) {
-        console.log(`Sending new audio: ${audioBlob.size} bytes (${newChunks.length} new chunks)`);
-        onAudioChunk(audioBlob);
-        lastSentIndexRef.current = chunksRef.current.length;
-      }
-    }
+  // onAudioChunk ref 업데이트
+  useEffect(() => {
+    onAudioChunkRef.current = onAudioChunk;
   }, [onAudioChunk]);
+
+  // 청크 전송 후 비우는 방식 (중복 방지)
+  const sendAndClearChunks = () => {
+    // 이미 전송 중이면 스킵
+    if (isSendingRef.current) {
+      console.log('Already sending, skipping...');
+      return;
+    }
+
+    const chunks = chunksRef.current;
+    if (chunks.length === 0) {
+      return;
+    }
+
+    const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+
+    if (audioBlob.size > 1000) {
+      isSendingRef.current = true;
+      console.log(`Sending audio: ${audioBlob.size} bytes (${chunks.length} chunks)`);
+
+      // 청크 비우기 (전송 전에 비워서 새 청크와 섞이지 않게)
+      chunksRef.current = [];
+
+      onAudioChunkRef.current(audioBlob);
+      isSendingRef.current = false;
+    }
+  };
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       chunksRef.current = [];
-      lastSentIndexRef.current = 0;
+      isSendingRef.current = false;
 
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm'
@@ -58,8 +76,9 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
       mediaRecorder.start(1000);
       mediaRecorderRef.current = mediaRecorder;
 
+      // 5초마다 전송
       intervalRef.current = window.setInterval(() => {
-        sendNewChunks();
+        sendAndClearChunks();
       }, 5000);
 
       setIsRecording(true);
@@ -82,14 +101,15 @@ export function AudioRecorder({ onAudioChunk }: AudioRecorderProps) {
       mediaRecorderRef.current.stop();
     }
 
-    sendNewChunks();
+    // 마지막 청크 전송
+    sendAndClearChunks();
 
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
 
     chunksRef.current = [];
-    lastSentIndexRef.current = 0;
+    isSendingRef.current = false;
     setIsRecording(false);
     setRecording(false);
   };
