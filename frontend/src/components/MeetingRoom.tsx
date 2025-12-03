@@ -7,16 +7,16 @@ import { toast } from '../stores/toastStore';
 import websocketService from '../services/websocket';
 
 interface MeetingRoomProps {
-  meetingId?: string | null;
   onBack?: () => void;
 }
 
-export function MeetingRoom({ meetingId, onBack }: MeetingRoomProps) {
+export function MeetingRoom({ onBack }: MeetingRoomProps) {
   const { questions, isRecording, reset } = useMeetingStore();
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
+  // 새 회의 ID는 컴포넌트 마운트 시 한 번만 생성
+  const [meetingId] = useState(() => 'meeting-' + Date.now());
 
-  const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:6001';
-  const MEETING_ID = meetingId || 'prototype-meeting-' + Date.now();
+  const WS_URL = import.meta.env.VITE_WS_URL || 'https://onno-backend.onrender.com';
   const USER_ID = 'user-1';
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export function MeetingRoom({ meetingId, onBack }: MeetingRoomProps) {
 
     try {
       websocketService.connect(WS_URL);
-      websocketService.joinMeeting(MEETING_ID, USER_ID);
+      websocketService.joinMeeting(meetingId, USER_ID);
       setConnectionStatus('connected');
       toast.success('회의에 연결되었습니다');
     } catch (error) {
@@ -37,7 +37,7 @@ export function MeetingRoom({ meetingId, onBack }: MeetingRoomProps) {
       websocketService.disconnect();
       reset();
     };
-  }, [meetingId]);
+  }, []);
 
   const handleAudioChunk = (blob: Blob) => {
     websocketService.sendAudioChunk(blob);
