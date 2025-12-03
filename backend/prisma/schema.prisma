@@ -15,7 +15,7 @@ datasource db {
 // ============ 사용자 (User) ============
 model User {
   id          String   @id @default(cuid())
-  email       String   @unique
+  email       String?  @unique  // Optional for backward compatibility
   name        String?
 
   // 인증 정보
@@ -35,6 +35,7 @@ model User {
   // 관계
   meetings    Meeting[]
   questionActions QuestionAction[]
+  relationships   RelationshipObject[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -118,12 +119,94 @@ enum QuestionActionType {
   DISMISSED      // 명시적 거부
 }
 
+// ============ 관계 객체 (RelationshipObject) ============
+// Onno의 핵심 차별점 - 스타트업/고객/파트너별 카드 관리
+
+model RelationshipObject {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 기본 정보
+  name        String   // "A팀", "B사"
+  type        RelationshipType @default(STARTUP)
+  industry    Industry?
+  stage       FundingStage?
+  status      RelationshipStatus @default(ACTIVE)
+
+  // 구조화 데이터 (MRR, CAC, LTV 등)
+  structuredData Json?   // { "mrr": 50000, "cac": 30, "ltv": 500, ... }
+
+  // 자유 노트
+  notes       String?
+  tags        String[] // 태그 배열
+
+  // 관계
+  meetings    Meeting[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([name])
+}
+
+enum RelationshipType {
+  STARTUP     // 스타트업
+  CLIENT      // 고객사
+  PARTNER     // 파트너
+  OTHER
+}
+
+enum Industry {
+  B2B_SAAS
+  B2C_APP
+  ECOMMERCE
+  FINTECH
+  HEALTHTECH
+  EDTECH
+  PROPTECH
+  LOGISTICS
+  AI_ML
+  BIOTECH
+  OTHER
+}
+
+enum FundingStage {
+  PRE_SEED
+  SEED
+  SERIES_A
+  SERIES_B
+  SERIES_C_PLUS
+  GROWTH
+  IPO
+  OTHER
+}
+
+enum RelationshipStatus {
+  ACTIVE      // 활성
+  ON_HOLD     // 대기 중
+  PASSED      // 패스
+  INVESTED    // 투자 완료
+  ARCHIVED    // 보관됨
+}
+
 // ============ 회의 (Meeting) ============
 model Meeting {
   id          String   @id @default(cuid())
   userId      String?
   user        User?    @relation(fields: [userId], references: [id])
+
+  // 관계 객체 연결 ⭐ 핵심
+  relationshipObjectId String?
+  relationshipObject   RelationshipObject? @relation(fields: [relationshipObjectId], references: [id])
+  meetingNumber        Int @default(1)  // 이 관계와의 몇 번째 미팅인지
+
+  // 회의 정보
   title       String?
+  meetingType MeetingType @default(GENERAL)
   startedAt   DateTime @default(now())
   endedAt     DateTime?
   status      MeetingStatus @default(ACTIVE)
@@ -140,8 +223,18 @@ model Meeting {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+  @@index([relationshipObjectId])
   @@index([status])
   @@index([startedAt])
+}
+
+enum MeetingType {
+  INVESTMENT_1ST    // 투자 1차 미팅
+  INVESTMENT_2ND    // 투자 2차+ 미팅
+  IR                // IR 미팅
+  DUE_DILIGENCE     // 실사
+  MENTORING         // 멘토링
+  GENERAL           // 일반
 }
 
 enum MeetingStatus {

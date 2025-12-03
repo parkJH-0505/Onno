@@ -1,0 +1,262 @@
+/* ============ Relationship List Page ============ */
+
+.relationship-list-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  min-height: 100vh;
+}
+
+.relationship-list-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.relationship-list-page__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 4px 0;
+}
+
+.relationship-list-page__subtitle {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* Filters */
+.relationship-list-page__filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.relationship-list-page__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  flex: 1;
+  min-width: 200px;
+}
+
+.relationship-list-page__search svg {
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+.relationship-list-page__search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.relationship-list-page__search-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.relationship-list-page__select {
+  padding: 8px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  min-width: 120px;
+}
+
+/* Content */
+.relationship-list-page__content {
+  min-height: 400px;
+}
+
+.relationship-list-page__loading,
+.relationship-list-page__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: var(--color-text-secondary);
+}
+
+.relationship-list-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.relationship-list-page__empty-icon {
+  color: var(--color-text-tertiary);
+  margin-bottom: 16px;
+}
+
+.relationship-list-page__empty h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 8px 0;
+}
+
+.relationship-list-page__empty p {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0 0 24px 0;
+}
+
+/* Grid */
+.relationship-list-page__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+/* Relationship Card */
+.relationship-card {
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.relationship-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.relationship-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.relationship-card__name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.relationship-card__status {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+}
+
+.relationship-card__meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.relationship-card__type,
+.relationship-card__industry,
+.relationship-card__stage {
+  padding: 4px 8px;
+  background: var(--color-surface-hover);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.relationship-card__stats {
+  display: flex;
+  gap: 24px;
+  padding: 12px 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 12px;
+}
+
+.relationship-card__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.relationship-card__stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.relationship-card__stat-label {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.relationship-card__tags {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.relationship-card__tag {
+  padding: 2px 8px;
+  background: var(--color-primary-light);
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--color-primary);
+}
+
+.relationship-card__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Spinner */
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .relationship-list-page {
+    padding: 16px;
+  }
+
+  .relationship-list-page__header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .relationship-list-page__filters {
+    flex-direction: column;
+  }
+
+  .relationship-list-page__search {
+    width: 100%;
+  }
+
+  .relationship-list-page__grid {
+    grid-template-columns: 1fr;
+  }
+}

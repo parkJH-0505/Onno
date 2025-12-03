@@ -1,0 +1,310 @@
+/* ============ Relationship Detail Page ============ */
+
+.relationship-detail-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+  min-height: 100vh;
+}
+
+.relationship-detail-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.relationship-detail-page__back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.relationship-detail-page__back:hover {
+  color: var(--color-text-primary);
+}
+
+.relationship-detail-page__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.relationship-detail-page__loading,
+.relationship-detail-page__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 16px;
+  color: var(--color-text-secondary);
+}
+
+/* Content */
+.relationship-detail-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Info Card */
+.relationship-detail-page__info-card {
+  padding: 24px;
+}
+
+.relationship-detail-page__info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.relationship-detail-page__name {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.relationship-detail-page__status {
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.relationship-detail-page__status.status--active {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-success);
+}
+
+.relationship-detail-page__status.status--on_hold {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--color-warning);
+}
+
+.relationship-detail-page__status.status--passed {
+  background: var(--color-surface-hover);
+  color: var(--color-text-tertiary);
+}
+
+.relationship-detail-page__status.status--invested {
+  background: rgba(79, 70, 229, 0.15);
+  color: var(--color-primary);
+}
+
+.relationship-detail-page__status.status--archived {
+  background: var(--color-surface-hover);
+  color: var(--color-text-tertiary);
+}
+
+.relationship-detail-page__meta {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.relationship-detail-page__meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.relationship-detail-page__meta-label {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.relationship-detail-page__meta-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.relationship-detail-page__tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.relationship-detail-page__tag {
+  padding: 4px 10px;
+  background: var(--color-primary-light);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--color-primary);
+}
+
+.relationship-detail-page__notes {
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.relationship-detail-page__notes h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin: 0 0 8px 0;
+}
+
+.relationship-detail-page__notes p {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* Metrics Card */
+.relationship-detail-page__metrics-card {
+  padding: 24px;
+}
+
+.relationship-detail-page__metrics-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 16px 0;
+}
+
+.relationship-detail-page__metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.relationship-detail-page__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: var(--color-surface-hover);
+  border-radius: var(--radius-md);
+}
+
+.relationship-detail-page__metric-label {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.5px;
+}
+
+.relationship-detail-page__metric-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* Meetings Card */
+.relationship-detail-page__meetings-card {
+  padding: 24px;
+}
+
+.relationship-detail-page__meetings-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 16px 0;
+}
+
+.relationship-detail-page__meetings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.relationship-detail-page__meeting-item {
+  padding: 16px;
+  background: var(--color-surface-hover);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+}
+
+.relationship-detail-page__meeting-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.relationship-detail-page__meeting-number {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.relationship-detail-page__meeting-date {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.relationship-detail-page__meeting-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.relationship-detail-page__meeting-summary {
+  margin: 12px 0 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.relationship-detail-page__meetings-empty {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.relationship-detail-page__meetings-empty p {
+  color: var(--color-text-tertiary);
+  margin: 0 0 16px 0;
+}
+
+/* Spinner */
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .relationship-detail-page {
+    padding: 16px;
+  }
+
+  .relationship-detail-page__header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .relationship-detail-page__name {
+    font-size: 24px;
+  }
+
+  .relationship-detail-page__meta {
+    gap: 16px;
+  }
+}

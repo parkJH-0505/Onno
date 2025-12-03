@@ -124,6 +124,122 @@ export const userApi = {
     fetchApi<UserStats>(`/api/users/${userId}/stats`),
 };
 
+// ============ Relationship Object API ============
+// Onno의 핵심 차별점 - 스타트업/고객/파트너별 카드 관리
+
+export type RelationshipType = 'STARTUP' | 'CLIENT' | 'PARTNER' | 'OTHER';
+export type Industry = 'B2B_SAAS' | 'B2C_APP' | 'ECOMMERCE' | 'FINTECH' | 'HEALTHTECH' | 'EDTECH' | 'PROPTECH' | 'LOGISTICS' | 'AI_ML' | 'BIOTECH' | 'OTHER';
+export type FundingStage = 'PRE_SEED' | 'SEED' | 'SERIES_A' | 'SERIES_B' | 'SERIES_C_PLUS' | 'GROWTH' | 'IPO' | 'OTHER';
+export type RelationshipStatus = 'ACTIVE' | 'ON_HOLD' | 'PASSED' | 'INVESTED' | 'ARCHIVED';
+export type MeetingType = 'INVESTMENT_1ST' | 'INVESTMENT_2ND' | 'IR' | 'DUE_DILIGENCE' | 'MENTORING' | 'GENERAL';
+
+export interface RelationshipObject {
+  id: string;
+  userId: string;
+  name: string;
+  type: RelationshipType;
+  industry?: Industry;
+  stage?: FundingStage;
+  status: RelationshipStatus;
+  structuredData?: Record<string, unknown>;
+  notes?: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    meetings: number;
+  };
+  meetings?: Array<{
+    id: string;
+    title: string | null;
+    meetingNumber: number;
+    meetingType: MeetingType;
+    startedAt: string;
+    endedAt: string | null;
+    status: string;
+    duration: number | null;
+    summary: string | null;
+    _count?: {
+      transcripts: number;
+      questions: number;
+    };
+  }>;
+}
+
+export interface CreateRelationshipInput {
+  userId: string;
+  name: string;
+  type?: RelationshipType;
+  industry?: Industry;
+  stage?: FundingStage;
+  notes?: string;
+  tags?: string[];
+}
+
+export interface UpdateRelationshipInput {
+  name?: string;
+  type?: RelationshipType;
+  industry?: Industry;
+  stage?: FundingStage;
+  status?: RelationshipStatus;
+  notes?: string;
+  tags?: string[];
+}
+
+export const relationshipApi = {
+  // 관계 목록 조회
+  getAll: (params: {
+    userId: string;
+    type?: RelationshipType;
+    status?: RelationshipStatus;
+    industry?: Industry;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) searchParams.append(key, String(value));
+    });
+    return fetchApi<RelationshipObject[]>(`/api/relationships?${searchParams}`);
+  },
+
+  // 관계 생성
+  create: (data: CreateRelationshipInput) =>
+    fetchApi<RelationshipObject>('/api/relationships', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // 관계 상세 조회
+  getById: (id: string) =>
+    fetchApi<RelationshipObject>(`/api/relationships/${id}`),
+
+  // 관계 수정
+  update: (id: string, data: UpdateRelationshipInput) =>
+    fetchApi<RelationshipObject>(`/api/relationships/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  // 관계의 구조화 데이터 업데이트
+  updateData: (id: string, structuredData: Record<string, unknown>, meetingId?: string) =>
+    fetchApi<RelationshipObject>(`/api/relationships/${id}/data`, {
+      method: 'PATCH',
+      body: JSON.stringify({ structuredData, meetingId }),
+    }),
+
+  // 관계 삭제 (소프트)
+  delete: (id: string, permanent = false) =>
+    fetchApi<void>(`/api/relationships/${id}?permanent=${permanent}`, {
+      method: 'DELETE',
+    }),
+
+  // 관계의 회의 목록
+  getMeetings: (id: string, limit = 20, offset = 0) =>
+    fetchApi<Meeting[]>(`/api/relationships/${id}/meetings?limit=${limit}&offset=${offset}`),
+};
+
 // ============ Meeting API ============
 
 export const meetingApi = {

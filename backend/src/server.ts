@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import meetingRoutes from './routes/meetingRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import relationshipRoutes from './routes/relationshipRoutes.js';
 import * as meetingService from './services/meetingService.js';
 import * as userService from './services/userService.js';
 
@@ -61,6 +62,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/relationships', relationshipRoutes);
 
 // WebSocket 연결 처리
 io.on('connection', (socket) => {
