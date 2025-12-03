@@ -1,0 +1,323 @@
+/* =============================================
+   ProfilePage Styles
+   ============================================= */
+
+/* Loading */
+.profile-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-6);
+  gap: var(--space-4);
+  color: var(--color-text-secondary);
+}
+
+.profile-loading__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border-light);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Section Hint */
+.profile-section__hint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* User Card */
+.profile-user-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-6) !important;
+  text-align: center;
+  background: linear-gradient(135deg, var(--color-primary) 0%, #6366F1 100%) !important;
+  color: white;
+}
+
+.profile-user-card__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-4);
+}
+
+.profile-user-card__name {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 var(--space-1) 0;
+}
+
+.profile-user-card__email {
+  font-size: 14px;
+  opacity: 0.8;
+  margin: 0 0 var(--space-6) 0;
+}
+
+.profile-user-card__stats {
+  display: flex;
+  gap: var(--space-8);
+  padding-top: var(--space-5);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  width: 100%;
+  justify-content: center;
+}
+
+.profile-user-card__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.profile-user-card__stat-value {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.profile-user-card__stat-label {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Error & Empty */
+.profile-error,
+.profile-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) !important;
+  text-align: center;
+}
+
+.profile-empty__icon {
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-4);
+}
+
+.profile-empty__text {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Domains Grid */
+.profile-domains {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-4);
+}
+
+/* Domain Card */
+.profile-domain-card {
+  padding: var(--space-5) !important;
+}
+
+.profile-domain-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-4);
+}
+
+.profile-domain-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.profile-domain-card__name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.profile-domain-card__description {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.profile-domain-card__level {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+}
+
+.profile-domain-card__level-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.profile-domain-card__stars {
+  display: flex;
+  gap: 2px;
+}
+
+.profile-domain-card__stars .star--filled {
+  color: #F59E0B;
+}
+
+.profile-domain-card__stars .star--empty {
+  color: var(--gray-300);
+}
+
+/* Progress */
+.profile-domain-card__progress {
+  margin-bottom: var(--space-4);
+}
+
+.profile-domain-card__progress-bar {
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-2);
+}
+
+.profile-domain-card__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), #6366F1);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.profile-domain-card__progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-domain-card__xp {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.profile-domain-card__next {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+/* Features */
+.profile-domain-card__features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.profile-domain-card__feature {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-radius: var(--radius-full);
+  font-weight: 500;
+}
+
+/* Level Ups */
+.profile-levelups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.profile-levelup-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) !important;
+}
+
+.profile-levelup-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--color-success-light);
+  color: var(--color-success);
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
+}
+
+.profile-levelup-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-levelup-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.profile-levelup-card__detail {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.profile-levelup-card__date {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+/* Account */
+.profile-account {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.profile-account__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  text-align: left;
+}
+
+.profile-account__item:hover {
+  background: var(--gray-50);
+}
+
+.profile-account__item svg {
+  color: var(--color-text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .profile-user-card__stats {
+    gap: var(--space-6);
+  }
+
+  .profile-domains {
+    grid-template-columns: 1fr;
+  }
+}

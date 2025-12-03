@@ -15,8 +15,38 @@ import * as meetingService from './services/meetingService.js';
 import * as userService from './services/userService.js';
 import * as personalizationService from './services/personalizationService.js';
 import { processMeetingEnd } from './services/summaryService.js';
+import * as authService from './services/authService.js';
 
 dotenv.config();
+
+// 게스트 계정 초기화 함수
+async function initializeGuestAccount() {
+  const guestEmail = 'guest@onno.app';
+  const guestPassword = 'guest123!';
+  const guestName = 'Guest User';
+
+  try {
+    // 게스트 계정이 있는지 확인
+    const existingGuest = await authService.findUserByEmail(guestEmail);
+
+    if (existingGuest) {
+      // 기존 계정이 있으면 비밀번호 업데이트
+      await authService.resetGuestPassword(guestEmail, guestPassword);
+      console.log('✅ Guest account password updated');
+    } else {
+      // 없으면 새로 생성
+      await authService.register({
+        email: guestEmail,
+        password: guestPassword,
+        name: guestName,
+        role: 'INVESTOR',
+      });
+      console.log('✅ Guest account created');
+    }
+  } catch (error) {
+    console.error('Failed to initialize guest account:', error);
+  }
+}
 
 const app = express();
 app.use(cors());
@@ -433,7 +463,10 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, async () => {
   console.log(`✅ Backend server running on http://localhost:${PORT}`);
   console.log(`✅ AI Service URL: ${AI_SERVICE_URL}`);
+
+  // 서버 시작 시 게스트 계정 초기화
+  await initializeGuestAccount();
 });

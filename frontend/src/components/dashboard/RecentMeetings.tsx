@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { meetingApi, type Meeting } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
+import { Card } from '../layout';
+import { Button } from '../design-system';
 import './RecentMeetings.css';
 
 interface RecentMeetingsProps {
   onSelectMeeting: (id: string) => void;
-  onViewAll: () => void;
   onNewMeeting: () => void;
 }
 
@@ -58,7 +59,6 @@ function formatDuration(startedAt: string, endedAt?: string): string {
 
 export function RecentMeetings({
   onSelectMeeting,
-  onViewAll,
   onNewMeeting,
 }: RecentMeetingsProps) {
   const { user } = useAuthStore();
@@ -72,7 +72,6 @@ export function RecentMeetings({
       try {
         setIsLoading(true);
         const allMeetings = await meetingApi.getAll();
-        // 최근 3개만 표시
         setMeetings(allMeetings.slice(0, 3));
       } catch (err) {
         console.error('Failed to load meetings:', err);
@@ -87,12 +86,9 @@ export function RecentMeetings({
   if (isLoading) {
     return (
       <div className="recent-meetings">
-        <div className="recent-meetings__header">
-          <h2 className="recent-meetings__title">📅 최근 회의</h2>
-        </div>
         <div className="recent-meetings__list">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="meeting-mini-card meeting-mini-card--skeleton">
+            <div key={i} className="meeting-item meeting-item--skeleton">
               <div className="skeleton-line skeleton-line--medium" />
               <div className="skeleton-line skeleton-line--short" />
             </div>
@@ -104,59 +100,62 @@ export function RecentMeetings({
 
   if (meetings.length === 0) {
     return (
-      <div className="recent-meetings">
-        <div className="recent-meetings__header">
-          <h2 className="recent-meetings__title">📅 최근 회의</h2>
+      <Card className="recent-meetings__empty">
+        <div className="recent-meetings__empty-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
         </div>
-        <div className="recent-meetings__empty">
-          <p>아직 진행된 회의가 없습니다</p>
-          <button className="recent-meetings__start-btn" onClick={onNewMeeting}>
-            🎙️ 첫 회의 시작하기
-          </button>
-        </div>
-      </div>
+        <p className="recent-meetings__empty-text">아직 진행된 회의가 없습니다</p>
+        <Button variant="primary" size="sm" onClick={onNewMeeting}>
+          첫 회의 시작하기
+        </Button>
+      </Card>
     );
   }
 
   return (
     <div className="recent-meetings">
-      <div className="recent-meetings__header">
-        <h2 className="recent-meetings__title">📅 최근 회의</h2>
-        <button className="recent-meetings__view-all" onClick={onViewAll}>
-          전체보기
-        </button>
-      </div>
       <div className="recent-meetings__list">
         {meetings.map((meeting) => (
-          <div
+          <Card
             key={meeting.id}
-            className="meeting-mini-card"
+            hoverable
             onClick={() => onSelectMeeting(meeting.id)}
+            className="meeting-item"
           >
-            <div className="meeting-mini-card__top">
-              <span className="meeting-mini-card__date">
-                {formatDate(meeting.startedAt)}
-              </span>
-              <span
-                className={`meeting-mini-card__status meeting-mini-card__status--${meeting.status.toLowerCase()}`}
-              >
-                {STATUS_LABELS[meeting.status] || meeting.status}
-              </span>
-            </div>
-            <div className="meeting-mini-card__title">
-              {meeting.title || '제목 없는 회의'}
-            </div>
-            <div className="meeting-mini-card__meta">
-              <span className="meeting-mini-card__duration">
-                ⏱️ {formatDuration(meeting.startedAt, meeting.endedAt || undefined)}
-              </span>
-              {meeting._count && (
-                <span className="meeting-mini-card__stats">
-                  💬 {meeting._count.transcripts} | ❓ {meeting._count.questions}
+            <div className="meeting-item__main">
+              <div className="meeting-item__header">
+                <h4 className="meeting-item__title">
+                  {meeting.title || '제목 없는 회의'}
+                </h4>
+                <span className={`meeting-item__status meeting-item__status--${meeting.status.toLowerCase()}`}>
+                  {STATUS_LABELS[meeting.status] || meeting.status}
                 </span>
-              )}
+              </div>
+              <div className="meeting-item__info">
+                <span className="meeting-item__date">{formatDate(meeting.startedAt)}</span>
+                <span className="meeting-item__divider">·</span>
+                <span className="meeting-item__duration">
+                  {formatDuration(meeting.startedAt, meeting.endedAt || undefined)}
+                </span>
+                {meeting._count && (
+                  <>
+                    <span className="meeting-item__divider">·</span>
+                    <span className="meeting-item__stats">
+                      전사 {meeting._count.transcripts}건
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="meeting-item__arrow">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </Card>
         ))}
       </div>
     </div>

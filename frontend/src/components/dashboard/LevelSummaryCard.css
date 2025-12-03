@@ -1,32 +1,58 @@
-.level-summary-card {
-  background: linear-gradient(135deg, var(--primary) 0%, #6366F1 100%);
-  border-radius: var(--radius-lg);
-  padding: 20px;
+/* =============================================
+   LevelSummaryCard Styles
+   ============================================= */
+
+.level-card {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #6366F1 100%);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
   color: white;
 }
 
-.level-summary-card--loading,
-.level-summary-card--empty {
-  background: white;
-  border: 1px solid var(--gray-200);
+/* Loading & Empty States */
+.level-card--loading,
+.level-card--empty {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--color-border-light);
   min-height: 140px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  color: var(--color-text-primary);
 }
 
-.level-summary-card__skeleton {
+.level-card__skeleton {
   width: 100%;
+  padding: var(--space-4);
 }
 
+.level-card__empty-icon {
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-3);
+}
+
+.level-card__empty-text {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  text-align: center;
+  margin: 0;
+}
+
+/* Skeleton */
 .skeleton-line {
-  height: 16px;
+  height: 14px;
   background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 4px;
-  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+}
+
+.skeleton-line:last-child {
+  margin-bottom: 0;
 }
 
 .skeleton-line--short {
@@ -46,81 +72,118 @@
   100% { background-position: -200% 0; }
 }
 
-.level-summary-card__empty-icon {
-  font-size: 40px;
-  margin-bottom: 12px;
-}
-
-.level-summary-card__empty-text {
-  color: var(--gray-500);
-  font-size: 14px;
-  text-align: center;
-}
-
-.level-summary-card__header {
+/* Header */
+.level-card__header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+  align-items: flex-start;
+  margin-bottom: var(--space-4);
 }
 
-.level-summary-card__domain {
-  font-size: 14px;
+.level-card__domain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.level-card__domain-label {
+  font-size: 12px;
   font-weight: 500;
-  opacity: 0.9;
-}
-
-.level-summary-card__level {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.level-summary-card__progress {
-  margin-bottom: 16px;
-}
-
-.level-summary-card__progress-bar {
-  height: 8px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.level-summary-card__progress-fill {
-  height: 100%;
-  background: white;
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.level-summary-card__progress-text {
-  font-size: 13px;
-  opacity: 0.9;
-}
-
-.level-summary-card__footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.level-summary-card__hint {
-  font-size: 13px;
   opacity: 0.8;
 }
 
-.level-summary-card__details-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  color: white;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.2s;
+.level-card__domain-name {
+  font-size: 18px;
+  font-weight: 700;
 }
 
-.level-summary-card__details-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+.level-card__level {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+}
+
+.level-card__level-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.level-card__stars {
+  display: flex;
+  gap: 2px;
+}
+
+.level-card__stars svg {
+  opacity: 0.9;
+}
+
+.level-card__stars .star--filled {
+  color: #FCD34D;
+}
+
+.level-card__stars .star--empty {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Progress */
+.level-card__progress {
+  margin-bottom: var(--space-4);
+}
+
+.level-card__progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-2);
+}
+
+.level-card__progress-fill {
+  height: 100%;
+  background: white;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.level-card__progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.level-card__xp {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.level-card__hint {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Details Button */
+.level-card__details-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.level-card__details-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.level-card__details-btn svg {
+  opacity: 0.8;
 }

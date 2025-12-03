@@ -1,148 +1,114 @@
-.recent-relationships {
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  border: 1px solid var(--gray-200);
-}
+/* =============================================
+   RecentRelationships Styles
+   ============================================= */
 
-.recent-relationships__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.recent-relationships__title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--gray-900);
-  margin: 0;
-}
-
-.recent-relationships__view-all {
-  background: none;
-  border: none;
-  color: var(--primary);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-
-.recent-relationships__view-all:hover {
-  background: var(--primary-light);
-}
-
-.recent-relationships__grid {
+.recent-relationships__list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
+/* Empty State */
 .recent-relationships__empty {
-  text-align: center;
-  padding: 24px 16px;
-}
-
-.recent-relationships__empty p {
-  color: var(--gray-500);
-  font-size: 14px;
-  margin-bottom: 16px;
-}
-
-.recent-relationships__add-btn {
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.recent-relationships__add-btn:hover {
-  background: var(--primary-dark);
-}
-
-/* 관계 미니 카드 */
-.relationship-mini-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 14px 16px;
-  background: var(--gray-50);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid transparent;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-8) var(--space-6);
 }
 
-.relationship-mini-card:hover {
-  background: white;
-  border-color: var(--primary);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+.recent-relationships__empty-icon {
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-4);
 }
 
-.relationship-mini-card--skeleton {
-  cursor: default;
+.recent-relationships__empty-text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
 }
 
-.relationship-mini-card--skeleton:hover {
-  background: var(--gray-50);
-  border-color: transparent;
-  box-shadow: none;
+/* Relationship Item */
+.relationship-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
 }
 
-.relationship-mini-card__name {
+.relationship-item__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.relationship-item__name {
   font-size: 15px;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-2) 0;
 }
 
-.relationship-mini-card__meta {
+.relationship-item__tags {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
-.relationship-mini-card__stage,
-.relationship-mini-card__industry {
-  font-size: 12px;
+.relationship-item__tag {
+  font-size: 11px;
+  font-weight: 500;
   padding: 2px 8px;
-  border-radius: 4px;
-  background: var(--gray-200);
-  color: var(--gray-600);
+  border-radius: var(--radius-sm);
+  background: var(--gray-100);
+  color: var(--color-text-secondary);
 }
 
-.relationship-mini-card__stage {
-  background: var(--primary-light);
-  color: var(--primary);
+.relationship-item__tag--stage {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
-.relationship-mini-card__meetings {
+.relationship-item__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+}
+
+.relationship-item__count {
   font-size: 12px;
-  color: var(--gray-500);
+  color: var(--color-text-secondary);
 }
 
-/* 스켈레톤 로딩 */
-.relationship-mini-card .skeleton-line {
+/* Skeleton */
+.relationship-item--skeleton {
+  background: var(--glass-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.skeleton-line {
   height: 14px;
   background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
 }
 
-.relationship-mini-card .skeleton-line--short {
-  width: 60%;
+.skeleton-line:last-child {
+  margin-bottom: 0;
 }
 
-.relationship-mini-card .skeleton-line--medium {
-  width: 40%;
+.skeleton-line--short {
+  width: 50%;
+}
+
+.skeleton-line--medium {
+  width: 30%;
 }
 
 @keyframes shimmer {

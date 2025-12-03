@@ -270,3 +270,24 @@ export async function changePassword(userId: string, currentPassword: string, ne
     data: { passwordHash: newPasswordHash },
   });
 }
+
+/**
+ * 이메일로 사용자 찾기
+ */
+export async function findUserByEmail(email: string) {
+  return prisma.user.findUnique({
+    where: { email },
+  });
+}
+
+/**
+ * 게스트 계정 비밀번호 리셋 (서버 초기화용)
+ */
+export async function resetGuestPassword(email: string, newPassword: string) {
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+  return prisma.user.update({
+    where: { email },
+    data: { passwordHash: newPasswordHash },
+  });
+}

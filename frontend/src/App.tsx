@@ -5,6 +5,7 @@ import { MeetingHistory } from './components/MeetingHistory';
 import { RelationshipListPage } from './pages/RelationshipListPage';
 import { RelationshipDetailPage } from './pages/RelationshipDetailPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { RelationshipFormModal } from './components/RelationshipFormModal';
 import { BottomNavigation } from './components/BottomNavigation';
 import { ToastContainer } from './components/ui/ToastContainer';
@@ -212,18 +213,10 @@ function App() {
         );
 
       case 'profile':
-        // Phase 4-3에서 ProfilePage로 교체 예정
         return (
-          <div className="profile-placeholder">
-            <div className="profile-placeholder__header">
-              <h1>👤 내 프로필</h1>
-              <p>준비 중입니다.</p>
-            </div>
-            <div className="profile-placeholder__info">
-              <p><strong>이메일:</strong> {user?.email || 'guest@onno.ai'}</p>
-              <p><strong>이름:</strong> {user?.name || '게스트'}</p>
-            </div>
-          </div>
+          <ProfilePage
+            onGoBack={() => setActiveTab('home')}
+          />
         );
 
       default:

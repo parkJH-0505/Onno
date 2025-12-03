@@ -55,8 +55,8 @@ export function LevelSummaryCard({ onViewDetails }: LevelSummaryCardProps) {
 
   if (isLoading) {
     return (
-      <div className="level-summary-card level-summary-card--loading">
-        <div className="level-summary-card__skeleton">
+      <div className="level-card level-card--loading">
+        <div className="level-card__skeleton">
           <div className="skeleton-line skeleton-line--short" />
           <div className="skeleton-line skeleton-line--long" />
           <div className="skeleton-line skeleton-line--medium" />
@@ -67,23 +67,32 @@ export function LevelSummaryCard({ onViewDetails }: LevelSummaryCardProps) {
 
   if (error || !progress) {
     return (
-      <div className="level-summary-card level-summary-card--empty">
-        <div className="level-summary-card__empty-icon">📊</div>
-        <p className="level-summary-card__empty-text">
+      <div className="level-card level-card--empty">
+        <div className="level-card__empty-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+        </div>
+        <p className="level-card__empty-text">
           {error || '회의를 진행하면 레벨이 시작됩니다!'}
         </p>
       </div>
     );
   }
 
-  // 주요 도메인 (가장 높은 레벨)
   const primaryDomain = progress.allDomains?.[0];
 
   if (!primaryDomain) {
     return (
-      <div className="level-summary-card level-summary-card--empty">
-        <div className="level-summary-card__empty-icon">🚀</div>
-        <p className="level-summary-card__empty-text">
+      <div className="level-card level-card--empty">
+        <div className="level-card__empty-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        </div>
+        <p className="level-card__empty-text">
           첫 회의를 시작해서 레벨을 올려보세요!
         </p>
       </div>
@@ -99,50 +108,61 @@ export function LevelSummaryCard({ onViewDetails }: LevelSummaryCardProps) {
     100
   );
 
-  // 레벨 스타 표시
-  const stars = Array(5)
-    .fill(0)
-    .map((_, i) => (i < currentLevel ? '⭐' : '☆'))
-    .join('');
-
   return (
-    <div className="level-summary-card">
-      <div className="level-summary-card__header">
-        <span className="level-summary-card__domain">
-          {DOMAIN_LABELS[primaryDomain.domain] || primaryDomain.domain}
-        </span>
-        <span className="level-summary-card__level">
-          {stars} Lv.{currentLevel}
-        </span>
+    <div className="level-card">
+      <div className="level-card__header">
+        <div className="level-card__domain">
+          <span className="level-card__domain-label">주요 분야</span>
+          <span className="level-card__domain-name">
+            {DOMAIN_LABELS[primaryDomain.domain] || primaryDomain.domain}
+          </span>
+        </div>
+        <div className="level-card__level">
+          <span className="level-card__level-value">Lv.{currentLevel}</span>
+          <div className="level-card__stars">
+            {Array(5).fill(0).map((_, i) => (
+              <svg
+                key={i}
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill={i < currentLevel ? 'currentColor' : 'none'}
+                stroke="currentColor"
+                strokeWidth="2"
+                className={i < currentLevel ? 'star--filled' : 'star--empty'}
+              >
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="level-summary-card__progress">
-        <div className="level-summary-card__progress-bar">
+      <div className="level-card__progress">
+        <div className="level-card__progress-bar">
           <div
-            className="level-summary-card__progress-fill"
+            className="level-card__progress-fill"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <span className="level-summary-card__progress-text">
-          {currentXp} / {nextLevelXp} XP
-        </span>
+        <div className="level-card__progress-info">
+          <span className="level-card__xp">{currentXp} / {nextLevelXp} XP</span>
+          <span className="level-card__hint">
+            {currentLevel < 5
+              ? `다음 레벨까지 ${nextLevelXp - currentXp} XP`
+              : '최고 레벨 달성!'}
+          </span>
+        </div>
       </div>
 
-      <div className="level-summary-card__footer">
-        <span className="level-summary-card__hint">
-          {currentLevel < 5
-            ? `다음 레벨까지 ${nextLevelXp - currentXp} XP`
-            : '최고 레벨 달성!'}
-        </span>
-        {onViewDetails && (
-          <button
-            className="level-summary-card__details-btn"
-            onClick={onViewDetails}
-          >
-            상세보기 →
-          </button>
-        )}
-      </div>
+      {onViewDetails && (
+        <button className="level-card__details-btn" onClick={onViewDetails}>
+          상세보기
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
